@@ -11,6 +11,7 @@
 
 #include "CollisionT.h"
 #include "Shapes.h"
+#include "AutoBBox.h"
 
 // ---------------------------------------------------------------------------------
 
@@ -72,6 +73,7 @@ Plane::Plane()
     };
 
     BBox(new Poly(vertex, 18));
+
     MoveTo(726, 180);
     type = PLANE;
 }

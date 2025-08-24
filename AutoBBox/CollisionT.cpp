@@ -24,8 +24,8 @@ int CollisionT::index = 0;                      // �ndice do vetor
 
 void CollisionT::Init()
 {
-    AutoBBox autobbox = AutoBBox("Resources/roda.png");
-	autobbox.generate_binarized_image();         
+    AutoBBox autobbox = AutoBBox("Resources/Plane.png");
+    autobbox.generate_poly_bbox();
 
     // cria fontes para exibi��o de texto
     font = new Font("Resources/Tahoma14.png");
