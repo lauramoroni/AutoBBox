@@ -24,7 +24,7 @@ int CollisionT::index = 0;                      // �ndice do vetor
 
 void CollisionT::Init()
 {
-    AutoBBox autobbox = AutoBBox("Resources/Plane.png");
+    AutoBBox autobbox = AutoBBox("Resources/autobbox/backg-map.png");
     autobbox.generate_poly_bbox();
 
     // cria fontes para exibi��o de texto

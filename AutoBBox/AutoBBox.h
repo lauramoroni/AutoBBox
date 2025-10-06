@@ -17,6 +17,7 @@ struct stb_Image {
 	uint8_t* pixel_data;
 };
 
+enum { UP, RIGHT_UP, RIGHT, RIGHT_DOWN, DOWN, LEFT_DOWN, LEFT, LEFT_UP };
 
 class AutoBBox
 {

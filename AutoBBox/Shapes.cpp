@@ -162,12 +162,12 @@ Bolt::Bolt()
     };
 
 
-    // autoBBox = new AutoBBox("Resources/image.png");
-	// BBox(autoBBox.generate_polygon());
+    AutoBBox autoBBox = AutoBBox("Resources/Bolt.png");
+	autoBBox.generate_poly_bbox();
 
-    BBox(new Poly(vertex, 7));
-    MoveTo(726, 380);
-    type = BOLT;
+    //BBox(new Poly(vertex, 7));
+    //MoveTo(726, 380);
+    //type = BOLT;
 }
 
 Bolt::~Bolt()
