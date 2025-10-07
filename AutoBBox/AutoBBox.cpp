@@ -1,5 +1,6 @@
 #include "AutoBBox.h"
 #include <fstream>
+#include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -12,7 +13,7 @@
 
 AutoBBox::AutoBBox(const char* filename)
 {
-	filename = filename;														// Armazena o nome do arquivo da imagem
+	this->filename = filename;														// Armazena o nome do arquivo da imagem
 
 	if (!filename || !strstr(filename, ".png")) {
 		return;		// Tratamento do filename e tipo de imagem
@@ -20,7 +21,7 @@ AutoBBox::AutoBBox(const char* filename)
 
 	int width, height, original_channels;
 	int desired_channels = 0;													// 0 para manter os canais originais
-	uint8_t *img = stbi_load(filename, &width, &height, &original_channels, desired_channels);
+	uint8_t* img = stbi_load(filename, &width, &height, &original_channels, desired_channels);
 
 	if (img == nullptr) {
 		return;
@@ -99,9 +100,23 @@ void AutoBBox::generate_poly_bbox()
 	if (!vertex_count)
 		return;
 
+	std::string base_name;
+	if (this->filename) {
+		base_name = this->filename;
+		// Remove o caminho do diretório, se houver
+		size_t last_slash = base_name.find_last_of("/\\");
+		if (std::string::npos != last_slash) {
+			base_name.erase(0, last_slash + 1);
+		}
+		// Remove a extensão do arquivo, se houver
+		size_t last_dot = base_name.find_last_of(".");
+		if (std::string::npos != last_dot) {
+			base_name.erase(last_dot);
+		}
+	}
 
-	stbi_write_png("Resources/bbox/binarized_image.png", image.width, image.height, binary_channels, binary_data, image.width * binary_channels);	// Salva a imagem binarizada como PNG
-
+	std::string binarized_path = "Resources/bbox/" + base_name + "_binarized.png";
+	stbi_write_png(binarized_path.c_str(), image.width, image.height, binary_channels, binary_data, image.width * binary_channels);	// Salva a imagem binarizada como PNG
 
 	Point* vertices = new Point[vertex_count];
 
@@ -114,9 +129,7 @@ void AutoBBox::generate_poly_bbox()
 	char last_direction = -1;
 	int current_index = starting_index;
 
-	//vertices[0] = Point(starting_index % image.width, starting_index / image.width);	// Armazena o primeiro vértice
-
-	 do {
+	do {
 		// Procura pelo próximo vértice na borda usando o elemento estruturante
 		for (int i = 0; i < bounding_structuring_element_size; i += 2) {
 			int line_offset = bounding_structuring_element[i];
@@ -157,19 +170,20 @@ void AutoBBox::generate_poly_bbox()
 
 					uint8_t* current_pixel = binary_data + current_index * binary_channels;
 					current_pixel[1] = 0;            // Marca o pixel como visitado, definindo o canal alfa como 0
-					
+
 					current_index = neighbor_index;	 // Atualiza o índice atual para o índice do vizinho
 
 					break;	                         // Sai do loop para procurar o próximo vértice
 				}
 			}
-		} 
+		}
 		interation_count++;
 	} while ((current_index != starting_index) && (interation_count <= vertex_count));
 
 
-	// Exportar os vertices para um arquivo de texto
-	std::ofstream outfile("Resources/bbox/vertices.txt");
+	std::string vertices_path = "Resources/bbox/" + base_name + "_vertices.txt";
+	std::ofstream outfile(vertices_path);
+
 	if (outfile.is_open()) {
 		for (int i = 0; i < new_vertex_index; i++) {
 			outfile << "Point(" << vertices[i].X() << ", " << vertices[i].Y() << ")," << std::endl;
@@ -182,5 +196,4 @@ void AutoBBox::generate_poly_bbox()
 
 	delete[] vertices;
 	delete[] binary_data;
-	//return vertices;
 }
