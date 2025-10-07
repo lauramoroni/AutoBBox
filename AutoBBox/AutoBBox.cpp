@@ -100,7 +100,7 @@ void AutoBBox::generate_poly_bbox()
 		return;
 
 
-	stbi_write_png("binarized_image.png", image.width, image.height, binary_channels, binary_data, image.width * binary_channels);	// Salva a imagem binarizada como PNG
+	stbi_write_png("Resources/bbox/binarized_image.png", image.width, image.height, binary_channels, binary_data, image.width * binary_channels);	// Salva a imagem binarizada como PNG
 
 
 	Point* vertices = new Point[vertex_count];
@@ -146,6 +146,9 @@ void AutoBBox::generate_poly_bbox()
 						int current_column = current_index % image.width;
 						int current_line = current_index / image.width;
 
+						current_column -= image.width / 2;
+						current_line -= image.height / 2;
+
 						vertices[new_vertex_index] = Point(current_column, current_line);	// Armazena o vértice encontrado
 						new_vertex_index++;
 					}
@@ -166,11 +169,13 @@ void AutoBBox::generate_poly_bbox()
 
 
 	// Exportar os vertices para um arquivo de texto
-	std::ofstream outfile("vertices.txt");
+	std::ofstream outfile("Resources/bbox/vertices.txt");
 	if (outfile.is_open()) {
 		for (int i = 0; i < new_vertex_index; i++) {
-			outfile << "Point(" << vertices[i].X() << ", " << vertices[i].Y() << ")" << std::endl;
+			outfile << "Point(" << vertices[i].X() << ", " << vertices[i].Y() << ")," << std::endl;
 		}
+		// quantidade de vertices
+		outfile << new_vertex_index << std::endl;
 		outfile.close();
 	}
 
