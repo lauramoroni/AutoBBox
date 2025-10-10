@@ -16,6 +16,8 @@
 
 #include "Movable.h"
 
+static std::vector<Point> loadVerticesFromFile(const char* filename);
+
 // ---------------------------------------------------------------------------------
 
 class Box : public Movable

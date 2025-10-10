@@ -186,10 +186,8 @@ void AutoBBox::generate_poly_bbox()
 
 	if (outfile.is_open()) {
 		for (int i = 0; i < new_vertex_index; i++) {
-			outfile << "Point(" << vertices[i].X() << ", " << vertices[i].Y() << ")," << std::endl;
+			outfile << vertices[i].X() << " " << vertices[i].Y() << std::endl;
 		}
-		// quantidade de vertices
-		outfile << new_vertex_index << std::endl;
 		outfile.close();
 	}
 
