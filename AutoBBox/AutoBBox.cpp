@@ -128,12 +128,16 @@ void AutoBBox::generate_poly_bbox()
 	unsigned int new_vertex_index = 0;
 	char last_direction = -1;
 	int current_index = starting_index;
+	int offset_structuring_element = 0;
 
 	do {
 		// Procura pelo próximo vértice na borda usando o elemento estruturante
 		for (int i = 0; i < bounding_structuring_element_size; i += 2) {
-			int line_offset = bounding_structuring_element[i];
-			int column_offset = bounding_structuring_element[i + 1];
+
+			int offset_index = (i + offset_structuring_element * 2) % (bounding_structuring_element_size);
+
+			int line_offset = bounding_structuring_element[offset_index];
+			int column_offset = bounding_structuring_element[offset_index + 1];
 
 			int current_element_line = (current_index / image.width) + line_offset;
 			int current_element_column = (current_index % image.width) + column_offset;
@@ -146,14 +150,14 @@ void AutoBBox::generate_poly_bbox()
 				if (neighbor_pixel[1] == 255) {	    // Se o pixel vizinho for parte da borda
 					char next_direction = 0;
 
-					if ((line_offset == -1) && (column_offset == 0)) next_direction = UP;
-					else if ((line_offset == -1) && (column_offset == 1)) next_direction = RIGHT_UP;
-					else if ((line_offset == 0) && (column_offset == 1)) next_direction = RIGHT;
-					else if ((line_offset == 1) && (column_offset == 1)) next_direction = RIGHT_DOWN;
-					else if ((line_offset == 1) && (column_offset == 0)) next_direction = DOWN;
-					else if ((line_offset == 1) && (column_offset == -1)) next_direction = LEFT_DOWN;
-					else if ((line_offset == 0) && (column_offset == -1)) next_direction = LEFT;
-					else if ((line_offset == -1) && (column_offset == -1)) next_direction = LEFT_UP;
+					if ((line_offset == -1) && (column_offset == 0)) { next_direction = UP; offset_structuring_element = RIGHT_DOWN; }
+					else if ((line_offset == -1) && (column_offset == 1)) { next_direction = RIGHT_UP; offset_structuring_element = DOWN; }
+					else if ((line_offset == 0) && (column_offset == 1)) { next_direction = RIGHT;  offset_structuring_element = LEFT_DOWN; }
+					else if ((line_offset == 1) && (column_offset == 1)) { next_direction = RIGHT_DOWN; offset_structuring_element = LEFT; }
+					else if ((line_offset == 1) && (column_offset == 0)) { next_direction = DOWN; offset_structuring_element = LEFT_UP; }
+					else if ((line_offset == 1) && (column_offset == -1)) { next_direction = LEFT_DOWN; offset_structuring_element = UP; }
+					else if ((line_offset == 0) && (column_offset == -1)) { next_direction = LEFT; offset_structuring_element = RIGHT_UP; }
+					else if ((line_offset == -1) && (column_offset == -1)) { next_direction = LEFT_UP; offset_structuring_element = RIGHT; }
 
 					if (next_direction != last_direction) {
 						int current_column = current_index % image.width;
@@ -169,7 +173,7 @@ void AutoBBox::generate_poly_bbox()
 					last_direction = next_direction;
 
 					uint8_t* current_pixel = binary_data + current_index * binary_channels;
-					current_pixel[1] = 0;            // Marca o pixel como visitado, definindo o canal alfa como 0
+					//current_pixel[1] = 0;            // Marca o pixel como visitado, definindo o canal alfa como 0
 
 					current_index = neighbor_index;	 // Atualiza o índice atual para o índice do vizinho
 
@@ -178,7 +182,7 @@ void AutoBBox::generate_poly_bbox()
 			}
 		}
 		interation_count++;
-	} while ((current_index != starting_index) && (interation_count <= vertex_count));
+	} while ((current_index != starting_index) && (interation_count <= vertex_count * 2));
 
 
 	std::string vertices_path = "Resources/bbox/" + base_name + "_vertices.txt";
