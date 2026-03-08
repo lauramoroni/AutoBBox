@@ -26,34 +26,22 @@ using std::stringstream;
 
 // ------------------------------------------------------------------------------
 
-enum Objs { BOX, WHEEL, DROP, PLANE, HAMMER, DISPLAY, BALL, DOT, BOLT, HOUSE, MOUSE };
+enum Objs { MOUSE, CUSTOM };
 
 // ------------------------------------------------------------------------------
 
 class CollisionT : public Game
 {
 private:
-    Sprite * backg = nullptr;       // pano de fundo
-    Sprite * overlay = nullptr;     // painel sobreposto
-
-    TileSet * selSet = nullptr;     // folha de sprites da caixa de sele��o
-    Animation * select = nullptr;   // anima��o da caixa de sele��o
-    
     Font * font = nullptr;          // exibi��o de texto normal
     Font * bold = nullptr;          // exibi��o de texto negrito
 
-    struct {
-        float x;                    // coordenada x
-        float y;                    // coordenada y
-    } pos[10];                      // posi��o inicial dos objetos
+    Object * currentObj = nullptr;
 
-    Object * obj[10] = {0};         // vetor de objetos
-
-    bool viewBBox = false;          // visualiza��o da bounding box
+    bool viewBBox = true;           // visualiza��o da bounding box (let's default to true maybe or keep false)
     stringstream text;              // convers�o para texto    
 
 public:
-    static int index;               // �ndice do vetor
     static Scene * scene;           // cena do jogo
 
     void Init();                    // inicializa��o

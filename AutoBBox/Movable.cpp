@@ -40,17 +40,12 @@ void Movable::OnCollision(Object * obj)
     }
     else
     {
-        // colis�o com o cursor do mouse
+        // colisï¿½o com o cursor do mouse
         if (window->KeyPress(VK_LBUTTON))
         {
             following = true;
             dx = x - window->MouseX();
             dy = y - window->MouseY();
-            CollisionT::index = type;
-        }
-        if (window->KeyUp(VK_LBUTTON))
-        {
-            following = false;
         }
     }
 }

@@ -15,99 +15,17 @@
 // ---------------------------------------------------------------------------------
 
 #include "Movable.h"
+#include <vector>
 
 static std::vector<Point> loadVerticesFromFile(const char* filename);
 
 // ---------------------------------------------------------------------------------
 
-class Box : public Movable
+class CustomShape : public Movable
 {
 public:
-    Box();
-    ~Box();
+    CustomShape(const char* filename);
+    ~CustomShape();
 };
-
-// ---------------------------------------------------------------------------------
-
-class Wheel : public Movable
-{
-public:
-    Wheel();
-    ~Wheel();
-};
-
-// ---------------------------------------------------------------------------------
-
-class Drop : public Movable
-{
-public:
-    Drop();
-    ~Drop();
-};
-
-// ---------------------------------------------------------------------------------
-
-class Plane : public Movable
-{
-public:
-    Plane();
-    ~Plane();
-};
-
-// ---------------------------------------------------------------------------------
-
-class Hammer : public Movable
-{
-public:
-    Hammer();
-    ~Hammer();
-};
-
-// ---------------------------------------------------------------------------------
-
-class Display : public Movable
-{
-public:
-    Display();
-    ~Display();
-};
-
-// ---------------------------------------------------------------------------------
-
-class Ball : public Movable
-{
-public:
-    Ball();
-    ~Ball();
-};
-
-// ---------------------------------------------------------------------------------
-
-class Dot : public Movable
-{
-public:
-    Dot();
-    ~Dot();
-};
-
-// ---------------------------------------------------------------------------------
-
-class Bolt : public Movable
-{
-public:
-    Bolt();
-    ~Bolt();
-};
-
-// ---------------------------------------------------------------------------------
-
-class House : public Movable
-{
-public:
-    House();
-    ~House();
-};
-
-// ---------------------------------------------------------------------------------
 
 #endif

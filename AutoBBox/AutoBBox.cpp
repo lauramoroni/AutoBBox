@@ -15,12 +15,12 @@ AutoBBox::AutoBBox(const char* filename)
 {
 	this->filename = filename;														// Armazena o nome do arquivo da imagem
 
-	if (!filename || !strstr(filename, ".png")) {
-		return;		// Tratamento do filename e tipo de imagem
+	if (!filename) {
+		return;		// Tratamento do filename 
 	}
 
 	int width, height, original_channels;
-	int desired_channels = 0;													// 0 para manter os canais originais
+	int desired_channels = 4;													// 4 para garantir RGBA
 	uint8_t* img = stbi_load(filename, &width, &height, &original_channels, desired_channels);
 
 	if (img == nullptr) {
