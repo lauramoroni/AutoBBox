@@ -22,7 +22,12 @@
 #include "Font.h"
 #include "Resources.h"
 #include <sstream>
+#include <string>
 using std::stringstream;
+
+// ------------------------------------------------------------------------------
+
+class AutoBBox; // Forward declaration
 
 // ------------------------------------------------------------------------------
 
@@ -37,9 +42,11 @@ private:
     Font * bold = nullptr;          // exibi��o de texto negrito
 
     Object * currentObj = nullptr;
+    std::string currentFilename;    // nome do arquivo atual carregado
+    AutoBBox* currentBBox = nullptr; // bounding box atual para preview e save
 
     bool viewBBox = true;           // visualiza��o da bounding box (let's default to true maybe or keep false)
-    stringstream text;              // convers�o para texto    
+    stringstream text;              // convers�o para texto
 
 public:
     static Scene * scene;           // cena do jogo

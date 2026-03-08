@@ -39,12 +39,22 @@ AutoBBox::~AutoBBox()
 	image.width = 0;					// Define a largura como zero
 	image.height = 0;					// Define a altura como zero
 	image.channels = 0;					// Define o número de canais como zero
+	delete[] vertices;					// Libera a memória alocada para os vértices
+	vertices = nullptr;
+	vertexCount = 0;
 }
 
-void AutoBBox::generate_poly_bbox()
+void AutoBBox::GeneratePolyBBox()
 {
 	if (!image.pixel_data) {
 		return;
+	}
+
+	// Libera vértices anteriores se existirem
+	if (vertices) {
+		delete[] vertices;
+		vertices = nullptr;
+		vertexCount = 0;
 	}
 
 	int vertex_count = image.width * image.height;  // Pior caso para o numero maximo de vertices
@@ -68,7 +78,7 @@ void AutoBBox::generate_poly_bbox()
 
 	// Boundary tracing
 
-	Point* vertices = new Point[vertex_count];
+	Point* temp_vertices = new Point[vertex_count];
 
 	int bounding_structuring_element[] = { -1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0 };
 	int bounding_structuring_element_size = sizeof(bounding_structuring_element) / sizeof(bounding_structuring_element[0]);
@@ -117,7 +127,7 @@ void AutoBBox::generate_poly_bbox()
 						current_column -= image.width / 2;
 						current_line -= image.height / 2;
 
-						vertices[new_vertex_index] = Point(current_column, current_line);
+						temp_vertices[new_vertex_index] = Point(current_column, current_line);
 						new_vertex_index++;
 					}
 
@@ -130,11 +140,20 @@ void AutoBBox::generate_poly_bbox()
 		}
 
 		interation_count++;
-	} while ((current_index != starting_index) && (interation_count <= vertex_count * 2));
+	} while ((current_index != starting_index) && (interation_count <= vertex_count));
 
+	// Armazena os vértices e o contador
+	vertices = temp_vertices;
+	vertexCount = new_vertex_index;
+}
 
-	// Output em arquivo de texto
-	
+void AutoBBox::WriteVerticesToFile()
+{
+	// Verifica se os vértices foram gerados
+	if (!vertices || vertexCount == 0) {
+		return;
+	}
+
 	std::string base_name;
 	if (this->filename) {
 		base_name = this->filename;
@@ -153,15 +172,23 @@ void AutoBBox::generate_poly_bbox()
 	}
 
 	std::string vertices_path = "Resources/bbox/" + base_name + "_vertices.txt";
-	std::ofstream outfile(vertices_path);
+	WriteVerticesToFile(vertices_path.c_str());
+}
+
+void AutoBBox::WriteVerticesToFile(const char* filepath)
+{
+	// Verifica se os vértices foram gerados
+	if (!vertices || vertexCount == 0) {
+		return;
+	}
+
+	std::ofstream outfile(filepath);
 
 	if (outfile.is_open()) {
-		for (int i = 0; i < new_vertex_index; i++) {
+		for (int i = 0; i < vertexCount; i++) {
 			outfile << vertices[i].X() << " " << vertices[i].Y() << std::endl;
 		}
 
 		outfile.close();
 	}
-
-	delete[] vertices;
 }

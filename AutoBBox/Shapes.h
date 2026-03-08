@@ -25,6 +25,7 @@ class CustomShape : public Movable
 {
 public:
     CustomShape(const char* filename);
+    CustomShape(const char* filename, Point* vertices, int vertexCount); // Construtor com vértices
     ~CustomShape();
 };
 

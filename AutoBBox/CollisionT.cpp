@@ -36,8 +36,34 @@ std::string openFileDialog() {
     ofn.nMaxFile = MAX_PATH;
     ofn.lpstrTitle = "Selecione uma Imagem";
     ofn.Flags = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-    
+
     if (GetOpenFileNameA(&ofn)) {
+        return std::string(filename);
+    }
+    return "";
+}
+
+std::string saveFileDialog(const std::string& defaultName) {
+    char filename[MAX_PATH];
+    ZeroMemory(&filename, sizeof(filename));
+
+    // Define nome padrão
+    if (!defaultName.empty()) {
+        strncpy_s(filename, defaultName.c_str(), MAX_PATH - 1);
+    }
+
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFilter = "Text Files\0*.txt\0All Files\0*.*\0";
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = "Salvar Vertices";
+    ofn.lpstrDefExt = "txt";
+    ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+
+    if (GetSaveFileNameA(&ofn)) {
         return std::string(filename);
     }
     return "";
@@ -74,14 +100,54 @@ void CollisionT::Update()
     if (window->KeyPress(VK_LBUTTON)) {
         float mx = window->MouseX();
         float my = window->MouseY();
+
+        // Botão Upload
         if (mx > window->Width() - 100 && my < 40) {
             std::string path = openFileDialog();
             if (!path.empty()) {
+                // Remove objeto anterior
                 if (currentObj) {
                     scene->Delete(currentObj, MOVING);
+                    currentObj = nullptr;
                 }
-                currentObj = new CustomShape(path.c_str());
+
+                // Remove bounding box anterior
+                if (currentBBox) {
+                    delete currentBBox;
+                    currentBBox = nullptr;
+                }
+
+                // Gera a bounding box para preview
+                currentBBox = new AutoBBox(path.c_str());
+                currentBBox->GeneratePolyBBox();
+
+                // Cria o objeto com a bounding box gerada para preview
+                if (currentBBox->GetVertices() && currentBBox->GetVertexCount() > 0) {
+                    currentObj = new CustomShape(path.c_str(), currentBBox->GetVertices(), currentBBox->GetVertexCount());
+                }
+
                 scene->Add(currentObj, MOVING);
+                currentFilename = path;
+            }
+        }
+        // Botão Save (aparece após upload)
+        else if (!currentFilename.empty() && currentBBox && mx > window->Width() - 100 && my >= 50 && my < 90) {
+            // Extrai o nome base do arquivo para sugerir no diálogo
+            std::string base_name = currentFilename;
+            size_t last_slash = base_name.find_last_of("/\\");
+            if (std::string::npos != last_slash) {
+                base_name.erase(0, last_slash + 1);
+            }
+            size_t last_dot = base_name.find_last_of(".");
+            if (std::string::npos != last_dot) {
+                base_name.erase(last_dot);
+            }
+            base_name += "_vertices.txt";
+
+            // Abre diálogo para escolher onde salvar
+            std::string savePath = saveFileDialog(base_name);
+            if (!savePath.empty()) {
+                currentBBox->WriteVerticesToFile(savePath.c_str());
             }
         }
     }
@@ -131,12 +197,16 @@ void CollisionT::Draw()
     // desenha cena
     scene->Draw();
 
-    // define cor dos textos
     Color textColor{ 0.65f, 0.65f, 0.65f, 1.0f };
     Color buttonColor{ 0.85f, 0.85f, 0.85f, 1.0f };
 
-    // Boto de upload no canto superior direito
+    // Upload
     font->Draw(window->Width() - 90, 20.0f, "[ Upload ]", buttonColor);
+
+    // Save
+    if (!currentFilename.empty() && currentBBox) {
+        font->Draw(window->Width() - 90, 60.0f, "[  Save  ]", buttonColor);
+    }
 
     // desenha bounding box dos objetos
     if (viewBBox)
@@ -147,6 +217,10 @@ void CollisionT::Draw()
 
 void CollisionT::Finalize()
 {
+    if (currentBBox) {
+        delete currentBBox;
+        currentBBox = nullptr;
+    }
     delete scene;
     delete font;
     delete bold;
