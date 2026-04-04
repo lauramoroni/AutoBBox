@@ -28,7 +28,7 @@ CustomShape::CustomShape(const char* filename, Point* vertices, int vertexCount)
 		BBox(new Poly(vertices, vertexCount));
 	}
 
-	MoveTo(window->CenterX(),window->CenterY()); // Center of a ~1152x648 window roughly
+	MoveTo(window->CenterX(),window->CenterY());
 	type = CUSTOM;
 }
 
