@@ -7,15 +7,7 @@
 #include <stdbool.h>
 
 #include "Geometry.h"
-
-
-struct stb_Image {
-	int width;
-	int height;
-	int channels;
-	size_t size;
-	uint8_t* pixel_data;
-};
+#include "StbImage.h"
 
 enum { LEFT_UP, LEFT, LEFT_DOWN, DOWN, RIGHT_DOWN, RIGHT, RIGHT_UP, UP };
 
@@ -23,7 +15,7 @@ class AutoBBox
 {
 private:
 	const char* filename = nullptr;						// Nome do arquivo da imagem
-	stb_Image image = { 0, 0, 0, 0, nullptr };			// Estrutura que contém os dados da imagem
+	StbImage image;										// Estrutura que contém os dados da imagem
 	Point* vertices = nullptr;							// Vetor de vértices do polígono
 	int vertexCount = 0;								// Número de vértices
 

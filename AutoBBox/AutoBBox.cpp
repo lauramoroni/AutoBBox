@@ -2,43 +2,14 @@
 #include <fstream>
 #include <string>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-
 #define ALPHA 3
 
-
-AutoBBox::AutoBBox(const char* filename)
+AutoBBox::AutoBBox(const char* filename) : image(filename)
 {
-	this->filename = filename;														// Armazena o nome do arquivo da imagem
-
-	if (!filename) {
-		return;		// Tratamento do filename 
-	}
-
-	int width, height, original_channels;
-	int desired_channels = 4;													// 4 para garantir RGBA
-	uint8_t* img = stbi_load(filename, &width, &height, &original_channels, desired_channels);
-
-	if (img == nullptr) {
-		return;
-	}
-
-	int channels = desired_channels ? desired_channels : original_channels;		// Se desired_channels for 0, mantém o original
-	image = { width, height, original_channels, static_cast<size_t>(width * height * channels), img };
+	this->filename = filename;			// Armazena o nome do arquivo
 }
-
 AutoBBox::~AutoBBox()
 {
-	stbi_image_free(image.pixel_data);	// Libera a memória alocada para os dados da imagem
-	image.pixel_data = nullptr;			// Define o ponteiro de dados da imagem como nulo
-	image.size = 0;						// Define o tamanho como zero
-	image.width = 0;					// Define a largura como zero
-	image.height = 0;					// Define a altura como zero
-	image.channels = 0;					// Define o número de canais como zero
 	delete[] vertices;					// Libera a memória alocada para os vértices
 	vertices = nullptr;
 	vertexCount = 0;

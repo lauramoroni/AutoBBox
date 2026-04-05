@@ -81,6 +81,7 @@
     <ClCompile Include="Shapes.cpp">
       <Filter>Game\Arquivos de Origem</Filter>
     </ClCompile>
+    <ClCompile Include="StbImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h">
@@ -167,6 +168,7 @@
     <ClInclude Include="Renderer.h">
       <Filter>Engine\Arquivos de Cabeçalho</Filter>
     </ClInclude>
+    <ClInclude Include="StbImage.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">
