@@ -33,7 +33,6 @@ StbImage::~StbImage()
 	height = 0;						// Define a altura como zero
 	channels = 0;					// Define o número de canais como zero
 }
-/*
 StbImage StbImage::operator+(const StbImage& other)
 {
 	return;
@@ -56,4 +55,3 @@ StbImage StbImage::operator|(const StbImage& other)
 StbImage StbImage::operator^(const StbImage& other)
 {
 }
-*/

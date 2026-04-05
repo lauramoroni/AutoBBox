@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+enum { MEAN, TRUNCATE };
+
 class StbImage
 {
 public:
@@ -16,7 +18,6 @@ public:
 
 	StbImage(const char* filename);
 	~StbImage();
-	/*
 
 	StbImage operator+(const StbImage& other); // adição de imagens (soma pixel a pixel)
 	StbImage operator-(const StbImage& other); // subtração de imagens (diferença pixel a pixel)
@@ -25,5 +26,6 @@ public:
 	StbImage operator&(const StbImage& other); // AND lógico
 	StbImage operator|(const StbImage& other); // OR lógico
 	StbImage operator^(const StbImage& other); // XOR lógico
-	*/
+private:
+	uint8_t normalize(uint16_t* pixel_data, int method = MEAN); // Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado (média ou truncamento)
 };
