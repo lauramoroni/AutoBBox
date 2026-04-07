@@ -17,15 +17,16 @@ public:
 	uint8_t* pixel_data = nullptr;
 
 	StbImage(const char* filename);
+	StbImage(int width, int height, int channels, uint8_t* pixel_data);
 	~StbImage();
 
-	StbImage operator+(const StbImage& other); // adição de imagens (soma pixel a pixel)
-	StbImage operator-(const StbImage& other); // subtração de imagens (diferença pixel a pixel)
-	StbImage operator*(const StbImage& other); // multiplicação de imagens (multiplicação pixel a pixel)
-	StbImage operator/(const StbImage& other); // divisão de imagens (divisão pixel a pixel)
-	StbImage operator&(const StbImage& other); // AND lógico
-	StbImage operator|(const StbImage& other); // OR lógico
-	StbImage operator^(const StbImage& other); // XOR lógico
+	StbImage sum(const StbImage& other, int method = MEAN); // adição de imagens (soma pixel a pixel)
+	StbImage subtract(const StbImage& other, int method = MEAN); // subtração de imagens (diferença pixel a pixel)
+	StbImage multiply(const StbImage& other, int method = MEAN); // multiplicação de imagens (multiplicação pixel a pixel)
+	StbImage divide(const StbImage& other, int method = MEAN); // divisão de imagens (divisão pixel a pixel)
+	StbImage logicalAnd(const StbImage& other, int method = MEAN); // AND lógico
+	StbImage logicalOr(const StbImage& other, int method = MEAN); // OR lógico
+	StbImage logicalXor(const StbImage& other, int method = MEAN); // XOR lógico
 private:
-	uint8_t normalize(uint16_t* pixel_data, int method = MEAN); // Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado (média ou truncamento)
+	void normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method = MEAN); // Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado (média ou truncamento)
 };
