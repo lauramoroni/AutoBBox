@@ -392,8 +392,7 @@ StbImage StbImage::shear(float shx, float shy) {
 }
 
 StbImage StbImage::applyCompositeTransform(float matrix[3][3]) {
-	// Para simplificar, mantemos o tamanho original. Em um cenário real, 
-	// calcularíamos os cantos transformados para achar o novo bounding box.
+
 	uint8_t* new_data = (uint8_t*)malloc(width * height * channels);
 	memset(new_data, 0, width * height * channels);
 
@@ -424,7 +423,6 @@ StbImage StbImage::applyCompositeTransform(float matrix[3][3]) {
 	return StbImage(width, height, channels, new_data);
 }
 
-// Método de Rotação isolado utilizando a estrutura de composta como base
 StbImage StbImage::rotate(float angle_degrees) {
 	float rad = angle_degrees * PI / 180.0f;
 	float cosA = std::cos(rad);
@@ -454,6 +452,116 @@ StbImage StbImage::rotate(float angle_degrees) {
 		}
 	}
 	return StbImage(width, height, channels, new_data);
+}
+
+StbImage StbImage::zoomInReplication(float factor) {
+	int new_width = (int)(width * factor);
+	int new_height = (int)(height * factor);
+	uint8_t* new_data = (uint8_t*)malloc(new_width * new_height * channels);
+
+	for (int y = 0; y < new_height; ++y) {
+		for (int x = 0; x < new_width; ++x) {
+			int src_x = (int)(x / factor);
+			int src_y = (int)(y / factor);
+
+			for (int c = 0; c < channels; ++c) {
+				new_data[(y * new_width + x) * channels + c] = pixel_data[(src_y * width + src_x) * channels + c];
+			}
+		}
+	}
+	return StbImage(new_width, new_height, channels, new_data);
+}
+
+StbImage StbImage::zoomInInterpolation(float factor) {
+	int new_width = (int)(width * factor);
+	int new_height = (int)(height * factor);
+	uint8_t* new_data = (uint8_t*)malloc(new_width * new_height * channels);
+
+	for (int y = 0; y < new_height; ++y) {
+		for (int x = 0; x < new_width; ++x) {
+			float src_x = x / factor;
+			float src_y = y / factor;
+
+			int x1 = (int)src_x;
+			int y1 = (int)src_y;
+			int x2 = std::min(x1 + 1, width - 1);
+			int y2 = std::min(y1 + 1, height - 1);
+
+			float dx = src_x - x1;
+			float dy = src_y - y1;
+
+			for (int c = 0; c < channels; ++c) {
+				// Pega os 4 vizinhos
+				float p1 = pixel_data[(y1 * width + x1) * channels + c];
+				float p2 = pixel_data[(y1 * width + x2) * channels + c];
+				float p3 = pixel_data[(y2 * width + x1) * channels + c];
+				float p4 = pixel_data[(y2 * width + x2) * channels + c];
+
+				// Interpola no eixo X
+				float top = p1 * (1.0f - dx) + p2 * dx;
+				float bottom = p3 * (1.0f - dx) + p4 * dx;
+
+				// Interpola no eixo Y
+				float pixel_val = top * (1.0f - dy) + bottom * dy;
+
+				new_data[(y * new_width + x) * channels + c] = (uint8_t)std::min(std::max((int)pixel_val, 0), 255);
+			}
+		}
+	}
+	return StbImage(new_width, new_height, channels, new_data);
+}
+
+StbImage StbImage::zoomOutExclusion(int factor) {
+	if (factor <= 1) return *this;
+
+	int new_width = width / factor;
+	int new_height = height / factor;
+	uint8_t* new_data = (uint8_t*)malloc(new_width * new_height * channels);
+
+	for (int y = 0; y < new_height; ++y) {
+		for (int x = 0; x < new_width; ++x) {
+			int src_x = x * factor;
+			int src_y = y * factor;
+
+			for (int c = 0; c < channels; ++c) {
+				new_data[(y * new_width + x) * channels + c] = pixel_data[(src_y * width + src_x) * channels + c];
+			}
+		}
+	}
+	return StbImage(new_width, new_height, channels, new_data);
+}
+
+StbImage StbImage::zoomOutMean(int factor) {
+	if (factor <= 1) return *this;
+
+	int new_width = width / factor;
+	int new_height = height / factor;
+	uint8_t* new_data = (uint8_t*)malloc(new_width * new_height * channels);
+
+	for (int y = 0; y < new_height; ++y) {
+		for (int x = 0; x < new_width; ++x) {
+
+			for (int c = 0; c < channels; ++c) {
+				int sum = 0;
+				int count = 0;
+
+				// Percorre o bloco factor x factor na imagem original
+				for (int fy = 0; fy < factor; ++fy) {
+					for (int fx = 0; fx < factor; ++fx) {
+						int src_x = x * factor + fx;
+						int src_y = y * factor + fy;
+
+						if (src_x < width && src_y < height) {
+							sum += pixel_data[(src_y * width + src_x) * channels + c];
+							count++;
+						}
+					}
+				}
+				new_data[(y * new_width + x) * channels + c] = (uint8_t)(sum / count);
+			}
+		}
+	}
+	return StbImage(new_width, new_height, channels, new_data);
 }
 
 void StbImage::normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method)
