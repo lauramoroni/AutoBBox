@@ -27,6 +27,24 @@ public:
 	StbImage logicalAnd(const StbImage& other, int method = MEAN); // AND lógico
 	StbImage logicalOr(const StbImage& other, int method = MEAN); // OR lógico
 	StbImage logicalXor(const StbImage& other, int method = MEAN); // XOR lógico
+
+	// Transformações Geométricas
+	StbImage translate(int dx, int dy);
+	StbImage rotate(float angle_degrees);
+	StbImage scale(float sx, float sy); // Opcional se for usar o Zoom, mas atende a escala geral
+	StbImage reflect(bool horizontal, bool vertical);
+	StbImage shear(float shx, float shy);
+
+	// B) Transformações Compostas
+	StbImage applyCompositeTransform(float matrix[3][3]);
+
+	// C) Zoom IN
+	StbImage zoomInReplication(float factor);
+	StbImage zoomInInterpolation(float factor);
+
+	// D) Zoom OUT
+	StbImage zoomOutExclusion(int factor);
+	StbImage zoomOutMean(int factor);
 private:
 	void normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method = MEAN); // Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado (média ou truncamento)
 };

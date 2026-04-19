@@ -210,17 +210,119 @@ StbImage StbImage::divide(const StbImage& other, int method)
 
 StbImage StbImage::logicalAnd(const StbImage& other, int method)
 {
-	return StbImage("path");	// Implementação futura
+	// A altura e largura serão as menores entre as duas imagens
+	int height = std::min(this->height, other.height);
+	int width = std::min(this->width, other.width);
+
+	// O número de canais será o maior entre as duas imagens
+	int channels = std::max(this->channels, other.channels);
+
+	// Aloca memória para os dados da imagem resultante
+	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			for (int c = 0; c < channels; ++c) {
+				int idx_result = (y * width + x) * channels + c;
+				int idx_this = (y * this->width + x) * this->channels + c;
+				int idx_other = (y * other.width + x) * other.channels + c;
+				uint16_t pixel_value_this = (x < this->width && y < this->height && c < this->channels) ? this->pixel_data[idx_this] : 0;
+				uint16_t pixel_value_other = (x < other.width && y < other.height && c < other.channels) ? other.pixel_data[idx_other] : 0;
+				raw_new_pixel_data[idx_result] = pixel_value_this & pixel_value_other;
+			}
+		}
+	}
+
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
+	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
+
+	// Salvar a imagem resultante para teste
+	stbi_write_png("Resources/and.png", width, height, channels, new_pixel_data, width * channels);
+
+	// Libera a memória alocada para os dados intermediários
+	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	delete[] raw_new_pixel_data;
+
+	return StbImage(width, height, channels, new_pixel_data);
 }
 
 StbImage StbImage::logicalOr(const StbImage& other, int method)
 {
-	return StbImage("path");	// Implementação futura
+	// A altura e largura serão as maiores entre as duas imagens
+	int height = std::max(this->height, other.height);
+	int width = std::max(this->width, other.width);
+
+	// O número de canais será o maior entre as duas imagens
+	int channels = std::max(this->channels, other.channels);
+
+	// Aloca memória para os dados da imagem resultante
+	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			for (int c = 0; c < channels; ++c) {
+				int idx_result = (y * width + x) * channels + c;
+				int idx_this = (y * this->width + x) * this->channels + c;
+				int idx_other = (y * other.width + x) * other.channels + c;
+				uint16_t pixel_value_this = (x < this->width && y < this->height && c < this->channels) ? this->pixel_data[idx_this] : 0;
+				uint16_t pixel_value_other = (x < other.width && y < other.height && c < other.channels) ? other.pixel_data[idx_other] : 0;
+				raw_new_pixel_data[idx_result] = pixel_value_this | pixel_value_other;
+			}
+		}
+	}
+
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
+	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
+
+	// Salvar a imagem resultante para teste
+	stbi_write_png("Resources/or.png", width, height, channels, new_pixel_data, width * channels);
+
+	// Libera a memória alocada para os dados intermediários
+	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	delete[] raw_new_pixel_data;
+
+	return StbImage(width, height, channels, new_pixel_data);
 }
 
 StbImage StbImage::logicalXor(const StbImage& other, int method)
 {
-	return StbImage("path");	// Implementação futura
+	// A altura e largura serão as maiores entre as duas imagens
+	int height = std::max(this->height, other.height);
+	int width = std::max(this->width, other.width);
+
+	// O número de canais será o maior entre as duas imagens
+	int channels = std::max(this->channels, other.channels);
+
+	// Aloca memória para os dados da imagem resultante
+	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			for (int c = 0; c < channels; ++c) {
+				int idx_result = (y * width + x) * channels + c;
+				int idx_this = (y * this->width + x) * this->channels + c;
+				int idx_other = (y * other.width + x) * other.channels + c;
+				uint16_t pixel_value_this = (x < this->width && y < this->height && c < this->channels) ? this->pixel_data[idx_this] : 0;
+				uint16_t pixel_value_other = (x < other.width && y < other.height && c < other.channels) ? other.pixel_data[idx_other] : 0;
+				raw_new_pixel_data[idx_result] = pixel_value_this ^ pixel_value_other;
+			}
+		}
+	}
+
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
+	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
+
+	// Salvar a imagem resultante para teste
+	stbi_write_png("Resources/xor.png", width, height, channels, new_pixel_data, width * channels);
+
+	// Libera a memória alocada para os dados intermediários
+	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	delete[] raw_new_pixel_data;
+
+	return StbImage(width, height, channels, new_pixel_data);
 }
 
 
