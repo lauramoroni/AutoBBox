@@ -96,6 +96,47 @@ void CollisionT::Update()
     if (window->KeyPress('B'))
         viewBBox = !viewBBox;
 
+    if (window->KeyDown('A')) {
+        Sprite* sprite1 = new Sprite("Resources/img1.png");
+        Sprite* sprite2 = new Sprite("Resources/img2.png");
+
+        scene->Add(new CustomShape("Resources/img1.png", nullptr, 0), MOVING);
+        scene->Add(new CustomShape("Resources/img2.png", nullptr, 0), MOVING);
+    }
+
+    if (window->KeyPress('Q')) {
+
+        StbImage img1("Resources/mcqueen_rodao.png");
+		StbImage img2("Resources/The-Witcher-3.png");
+
+		StbImage result = img1.sum(img2);
+        
+		scene->Add(new CustomShape("Resources/sum.png", nullptr, 0), MOVING);
+	}
+    else if (window->KeyPress('T')) {
+        StbImage img1("Resources/mcqueen_rodao.png");
+		StbImage img2("Resources/The-Witcher-3.png");
+
+		StbImage result = img1.subtract(img2);
+
+		scene->Add(new CustomShape("Resources/sub.png", nullptr, 0), MOVING);
+	}
+    else if (window->KeyPress('M')) {
+        StbImage img1("Resources/mcqueen_rodao.png");
+        StbImage img2("Resources/The-Witcher-3.png");
+
+        StbImage result = img1.multiply(img2);
+
+        scene->Add(new CustomShape("Resources/mul.png", nullptr, 0), MOVING);
+    } else if (window->KeyPress('D')) {
+        StbImage img1("Resources/mcqueen_rodao.png");
+        StbImage img2("Resources/The-Witcher-3.png");
+        StbImage result = img1.divide(img2);
+		StbImage rotated = result.rotate(45).translate(31, 40);
+        scene->Add(new CustomShape("Resources/translate.png", nullptr, 0), MOVING);
+	}
+	
+
     // upload button simulation (canto superior direito)
     if (window->KeyPress(VK_LBUTTON)) {
         float mx = window->MouseX();

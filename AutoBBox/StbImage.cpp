@@ -6,6 +6,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include <algorithm>
+#include <cmath> 
+
+#define PI 3.14159265f
 
 StbImage::StbImage(const char* filename)
 {
@@ -325,6 +328,133 @@ StbImage StbImage::logicalXor(const StbImage& other, int method)
 	return StbImage(width, height, channels, new_pixel_data);
 }
 
+StbImage StbImage::translate(int dx, int dy) {
+	uint8_t* new_data = (uint8_t*)malloc(width * height * channels);
+	memset(new_data, 0, width * height * channels); // Fundo preto/transparente
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			int new_x = x + dx;
+			int new_y = y + dy;
+
+			if (new_x >= 0 && new_x < width && new_y >= 0 && new_y < height) {
+				for (int c = 0; c < channels; ++c) {
+					new_data[(new_y * width + new_x) * channels + c] = pixel_data[(y * width + x) * channels + c];
+				}
+			}
+		}
+	}
+
+	// salvar imagem
+	stbi_write_png("Resources/translate.png", width, height, channels, new_data, width * channels);
+	return StbImage(width, height, channels, new_data);
+}
+
+StbImage StbImage::reflect(bool horizontal, bool vertical) {
+	uint8_t* new_data = (uint8_t*)malloc(width * height * channels);
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			int src_x = horizontal ? (width - 1 - x) : x;
+			int src_y = vertical ? (height - 1 - y) : y;
+
+			for (int c = 0; c < channels; ++c) {
+				new_data[(y * width + x) * channels + c] = pixel_data[(src_y * width + src_x) * channels + c];
+			}
+		}
+	}
+	return StbImage(width, height, channels, new_data);
+}
+
+StbImage StbImage::shear(float shx, float shy) {
+	// Calculando novo tamanho para não cortar a imagem
+	int new_width = width + (int)(height * std::abs(shx));
+	int new_height = height + (int)(width * std::abs(shy));
+
+	uint8_t* new_data = (uint8_t*)malloc(new_width * new_height * channels);
+	memset(new_data, 0, new_width * new_height * channels);
+
+	// Inverse mapping para evitar buracos
+	for (int y = 0; y < new_height; ++y) {
+		for (int x = 0; x < new_width; ++x) {
+			// Transformação inversa do cisalhamento
+			int src_x = (int)(x - shx * y);
+			int src_y = (int)(y - shy * x);
+
+			if (src_x >= 0 && src_x < width && src_y >= 0 && src_y < height) {
+				for (int c = 0; c < channels; ++c) {
+					new_data[(y * new_width + x) * channels + c] = pixel_data[(src_y * width + src_x) * channels + c];
+				}
+			}
+		}
+	}
+	return StbImage(new_width, new_height, channels, new_data);
+}
+
+StbImage StbImage::applyCompositeTransform(float matrix[3][3]) {
+	// Para simplificar, mantemos o tamanho original. Em um cenário real, 
+	// calcularíamos os cantos transformados para achar o novo bounding box.
+	uint8_t* new_data = (uint8_t*)malloc(width * height * channels);
+	memset(new_data, 0, width * height * channels);
+
+	// Determinante simples para matriz 2x2 (ignorando translação para a inversão base)
+	float det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+	if (std::abs(det) < 0.0001f) return StbImage(width, height, channels, new_data); // Previne divisão por zero
+
+	// Mapeamento inverso
+	for (int dest_y = 0; dest_y < height; ++dest_y) {
+		for (int dest_x = 0; dest_x < width; ++dest_x) {
+
+			// Subtrai translação
+			float tx = dest_x - matrix[0][2];
+			float ty = dest_y - matrix[1][2];
+
+			// Inversa da Rotação/Escala/Cisalhamento
+			int src_x = (int)((matrix[1][1] * tx - matrix[0][1] * ty) / det);
+			int src_y = (int)((matrix[0][0] * ty - matrix[1][0] * tx) / det);
+
+			if (src_x >= 0 && src_x < width && src_y >= 0 && src_y < height) {
+				for (int c = 0; c < channels; ++c) {
+					new_data[(dest_y * width + dest_x) * channels + c] =
+						pixel_data[(src_y * width + src_x) * channels + c];
+				}
+			}
+		}
+	}
+	return StbImage(width, height, channels, new_data);
+}
+
+// Método de Rotação isolado utilizando a estrutura de composta como base
+StbImage StbImage::rotate(float angle_degrees) {
+	float rad = angle_degrees * PI / 180.0f;
+	float cosA = std::cos(rad);
+	float sinA = std::sin(rad);
+
+	// Rotação ao redor do centro
+	int cx = width / 2;
+	int cy = height / 2;
+
+	uint8_t* new_data = (uint8_t*)malloc(width * height * channels);
+	memset(new_data, 0, width * height * channels);
+
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			// Translação para o centro, rotação inversa, translação de volta
+			int dx = x - cx;
+			int dy = y - cy;
+
+			int src_x = (int)(dx * cosA + dy * sinA) + cx;
+			int src_y = (int)(-dx * sinA + dy * cosA) + cy;
+
+			if (src_x >= 0 && src_x < width && src_y >= 0 && src_y < height) {
+				for (int c = 0; c < channels; ++c) {
+					new_data[(y * width + x) * channels + c] = pixel_data[(src_y * width + src_x) * channels + c];
+				}
+			}
+		}
+	}
+	return StbImage(width, height, channels, new_data);
+}
 
 void StbImage::normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method)
 {

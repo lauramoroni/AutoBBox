@@ -35,14 +35,14 @@ public:
 	StbImage reflect(bool horizontal, bool vertical);
 	StbImage shear(float shx, float shy);
 
-	// B) Transformações Compostas
+	// Transformações Compostas
 	StbImage applyCompositeTransform(float matrix[3][3]);
 
-	// C) Zoom IN
+	// Zoom IN
 	StbImage zoomInReplication(float factor);
 	StbImage zoomInInterpolation(float factor);
 
-	// D) Zoom OUT
+	// Zoom OUT
 	StbImage zoomOutExclusion(int factor);
 	StbImage zoomOutMean(int factor);
 private:
