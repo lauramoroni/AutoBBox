@@ -49,7 +49,7 @@ std::string saveFileDialog(const std::string& defaultName) {
     char filename[MAX_PATH];
     ZeroMemory(&filename, sizeof(filename));
 
-    // Define nome padrão
+    // Define nome padrï¿½o
     if (!defaultName.empty()) {
         strncpy_s(filename, defaultName.c_str(), MAX_PATH - 1);
     }
@@ -115,6 +115,47 @@ void CollisionT::Update()
 	OutputDebugStringA(("Mouse state: " + std::to_string(currMouse) + "\n").c_str());
     mouseClicked = currMouse && !prevMouse;
     prevMouse = currMouse;
+    
+    if (window->KeyDown('A')) {
+        Sprite* sprite1 = new Sprite("Resources/img1.png");
+        Sprite* sprite2 = new Sprite("Resources/img2.png");
+
+        scene->Add(new CustomShape("Resources/img1.png", nullptr, 0), MOVING);
+        scene->Add(new CustomShape("Resources/img2.png", nullptr, 0), MOVING);
+    }
+
+    if (window->KeyPress('Q')) {
+
+        StbImage img1("Resources/mcqueen_rodao.png");
+		StbImage img2("Resources/The-Witcher-3.png");
+
+		StbImage result = img1.sum(img2);
+        
+		scene->Add(new CustomShape("Resources/sum.png", nullptr, 0), MOVING);
+	}
+    else if (window->KeyPress('T')) {
+        StbImage img1("Resources/mcqueen_rodao.png");
+		StbImage img2("Resources/The-Witcher-3.png");
+
+		StbImage result = img1.subtract(img2);
+
+		scene->Add(new CustomShape("Resources/sub.png", nullptr, 0), MOVING);
+	}
+    else if (window->KeyPress('M')) {
+        StbImage img1("Resources/mcqueen_rodao.png");
+        StbImage img2("Resources/The-Witcher-3.png");
+
+        StbImage result = img1.multiply(img2);
+
+        scene->Add(new CustomShape("Resources/mul.png", nullptr, 0), MOVING);
+    } else if (window->KeyPress('D')) {
+        StbImage img1("Resources/mcqueen_rodao.png");
+        StbImage img2("Resources/The-Witcher-3.png");
+        StbImage result = img1.divide(img2);
+		StbImage rotated = result.rotate(45).translate(31, 40);
+        scene->Add(new CustomShape("Resources/translate.png", nullptr, 0), MOVING);
+	}
+	
 
     // upload button simulation (canto superior direito)
     if (mouseClicked) {
@@ -122,13 +163,13 @@ void CollisionT::Update()
         float mx = window->MouseX();
         float my = window->MouseY();
 
-        // Botão Upload
+        // Botï¿½o Upload
         if (mx > window->Width() - 100 && my < 40) {
             std::string path = openFileDialog();
             if (!path.empty()) {
                 // Sem remover o objeto anterior
 
-                // Remove bounding box anterior (apenas visualização / último)
+                // Remove bounding box anterior (apenas visualizaï¿½ï¿½o / ï¿½ltimo)
                 if (currentBBox) {
                     delete currentBBox;
                     currentBBox = nullptr;
@@ -143,7 +184,7 @@ void CollisionT::Update()
                 if (currentBBox->GetVertices() && currentBBox->GetVertexCount() > 0) {
                     newObj = new CustomShape(path.c_str(), currentBBox->GetVertices(), currentBBox->GetVertexCount());
 
-                    // Fazer o novo objeto começar já selecionado
+                    // Fazer o novo objeto comeï¿½ar jï¿½ selecionado
                     if (Movable* mov = dynamic_cast<Movable*>(newObj)) {
                         mov->selected = true;
                     }
@@ -155,9 +196,9 @@ void CollisionT::Update()
                 currentFilename = path;
             }
         }
-        // Botão Save (aparece após upload)
+        // Botï¿½o Save (aparece apï¿½s upload)
         else if (!currentFilename.empty() && currentBBox && mx > window->Width() - 100 && my >= 50 && my < 90) {
-            // Extrai o nome base do arquivo para sugerir no diálogo
+            // Extrai o nome base do arquivo para sugerir no diï¿½logo
             std::string base_name = currentFilename;
             size_t last_slash = base_name.find_last_of("/\\");
             if (std::string::npos != last_slash) {
@@ -169,7 +210,7 @@ void CollisionT::Update()
             }
             base_name += "_vertices.txt";
 
-            // Abre diálogo para escolher onde salvar
+            // Abre diï¿½logo para escolher onde salvar
             std::string savePath = saveFileDialog(base_name);
             if (!savePath.empty()) {
                 currentBBox->WriteVerticesToFile(savePath.c_str());
@@ -178,7 +219,7 @@ void CollisionT::Update()
     }
 
     // Desselecionar todos ao clicar fora (sobrescrito se o clique atingir algum, atravs do Movable)
-    // Não desseleciona se o menu radial estiver aberto (tecla E)
+    // Nï¿½o desseleciona se o menu radial estiver aberto (tecla E)
     if (mouseClicked && !window->KeyDown(VK_SHIFT) && !window->KeyDown('E')) {
         scene->Begin();
         Object* obj = nullptr;
