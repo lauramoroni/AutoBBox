@@ -50,6 +50,7 @@ private:
 
 public:
     static Scene * scene;           // cena do jogo
+    static bool mouseClicked;       // estado global do clique para a frame atual
 
     void Init();                    // inicializa��o
     void Update();                  // atualiza��o

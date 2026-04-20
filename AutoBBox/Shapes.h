@@ -16,6 +16,7 @@
 
 #include "Movable.h"
 #include <vector>
+#include <string>
 
 static std::vector<Point> loadVerticesFromFile(const char* filename);
 
@@ -24,6 +25,7 @@ static std::vector<Point> loadVerticesFromFile(const char* filename);
 class CustomShape : public Movable
 {
 public:
+    std::string imgFilename;
     CustomShape(const char* filename);
     CustomShape(const char* filename, Point* vertices, int vertexCount); // Construtor com vértices
     ~CustomShape();

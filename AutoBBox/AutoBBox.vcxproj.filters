@@ -82,6 +82,7 @@
       <Filter>Game\Arquivos de Origem</Filter>
     </ClCompile>
     <ClCompile Include="StbImage.cpp" />
+    <ClCompile Include="RadialMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h">
@@ -169,6 +170,7 @@
       <Filter>Engine\Arquivos de Cabeçalho</Filter>
     </ClInclude>
     <ClInclude Include="StbImage.h" />
+    <ClInclude Include="RadialMenu.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Engine">

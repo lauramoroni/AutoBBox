@@ -19,6 +19,7 @@ Movable::Movable()
     sprite = nullptr;
     colliding = false;
     following = false;
+    selected = false;
     dx = dy = 0;
 }
 
@@ -40,12 +41,19 @@ void Movable::OnCollision(Object * obj)
     }
     else
     {
-        // colisï¿½o com o cursor do mouse
-        if (window->KeyPress(VK_LBUTTON))
+        // colisão com o cursor do mouse
+        // Não reage se o menu radial (E) estiver sendo ativado
+        if (CollisionT::mouseClicked && !window->KeyDown('E'))
         {
             following = true;
             dx = x - window->MouseX();
             dy = y - window->MouseY();
+
+            if (window->KeyDown(VK_SHIFT)) {
+                selected = !selected;
+            } else {
+                selected = true;
+            }
         }
     }
 }
@@ -59,6 +67,10 @@ void Movable::Update()
     if (following)
     {
         MoveTo(window->MouseX() + dx, window->MouseY() + dy);
+
+        if (!window->KeyDown(VK_LBUTTON)) {
+            following = false;
+        }
     }
 }
 
@@ -66,10 +78,13 @@ void Movable::Update()
 
 void Movable::Draw()
 {
+    Color c = Color(1, 1, 1, 1);
     if (colliding)
-        sprite->Draw(x, y, z, scale, rotation, Color(1, 0, 0, 1)); // vermelho
-    else
-        sprite->Draw(x, y, z, scale, rotation, Color(1, 1, 1, 1)); // normal
+        c = Color(1, 0, 0, 1); // vermelho
+    else if (selected)
+        c = Color(0.5f, 1.0f, 0.5f, 1.0f); // verdinho pra indicar selecionado
+
+    sprite->Draw(x, y, z, scale, rotation, c);
 }
 
 // ---------------------------------------------------------------------------------

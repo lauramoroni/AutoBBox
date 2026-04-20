@@ -26,7 +26,10 @@ protected:
     Sprite * sprite;                            // sprite do objeto
     bool colliding;                             // objeto em colis�o
     bool following;                             // modo de persegui��o do mouse
-    float dx, dy;                               // dist�ncia para a posi��o do mouse
+    float dx, dy;
+
+public:
+    bool selected;                               // dist�ncia para a posi��o do mouse
 
 public:
     Movable();                                  // construtor

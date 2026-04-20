@@ -22,6 +22,7 @@
 
 CustomShape::CustomShape(const char* filename, Point* vertices, int vertexCount)
 {
+	imgFilename = filename;
 	sprite = new Sprite(filename);
 
 	if (vertices && vertexCount > 0) {

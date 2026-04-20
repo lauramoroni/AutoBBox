@@ -14,6 +14,7 @@
 #include "Shapes.h"
 #include "Mouse.h"
 #include "AutoBBox.h"
+#include "RadialMenu.h"
 #include <windows.h>
 #include <commdlg.h>
 #include <string>
@@ -21,6 +22,7 @@
 // ------------------------------------------------------------------------------
 
 Scene * CollisionT::scene = nullptr;            // cena do jogo
+bool CollisionT::mouseClicked = false;          // clique do mouse
 
 // ------------------------------------------------------------------------------
 
@@ -82,22 +84,41 @@ void CollisionT::Init()
 
     // adiciona mouse na cena
     scene->Add(new Mouse(), MOVING);
+
+    // adiciona radial menu
+    scene->Add(new RadialMenu(), MOVING);
 }
 
 // ------------------------------------------------------------------------------
 
 void CollisionT::Update()
 {
-    // sai com o pressionamento da tecla ESC
-    if (window->KeyDown(VK_ESCAPE))
-        window->Close();
+    // desseleciona figuras com a tecla ESC
+    if (window->KeyPress(VK_ESCAPE)) {
+        scene->Begin();
+        Object* obj = nullptr;
+        while ((obj = scene->Next()) != nullptr) {
+            if (Movable* mov = dynamic_cast<Movable*>(obj)) {
+                if (mov->selected) {
+                    mov->selected = false;
+                }
+            }
+        }
+    }
 
     // habilita/desabilita bounding box
     if (window->KeyPress('B'))
         viewBBox = !viewBBox;
 
+    static bool prevMouse = false;
+    bool currMouse = window->KeyDown(VK_LBUTTON);
+	OutputDebugStringA(("Mouse state: " + std::to_string(currMouse) + "\n").c_str());
+    mouseClicked = currMouse && !prevMouse;
+    prevMouse = currMouse;
+
     // upload button simulation (canto superior direito)
-    if (window->KeyPress(VK_LBUTTON)) {
+    if (mouseClicked) {
+        OutputDebugStringA(("Mouse clicked: " + std::to_string(mouseClicked) + "\n").c_str());
         float mx = window->MouseX();
         float my = window->MouseY();
 
@@ -105,13 +126,9 @@ void CollisionT::Update()
         if (mx > window->Width() - 100 && my < 40) {
             std::string path = openFileDialog();
             if (!path.empty()) {
-                // Remove objeto anterior
-                if (currentObj) {
-                    scene->Delete(currentObj, MOVING);
-                    currentObj = nullptr;
-                }
+                // Sem remover o objeto anterior
 
-                // Remove bounding box anterior
+                // Remove bounding box anterior (apenas visualização / último)
                 if (currentBBox) {
                     delete currentBBox;
                     currentBBox = nullptr;
@@ -121,12 +138,20 @@ void CollisionT::Update()
                 currentBBox = new AutoBBox(path.c_str());
                 currentBBox->GeneratePolyBBox();
 
-                // Cria o objeto com a bounding box gerada para preview
+                // Cria o objeto com a bounding box gerada
+                Object* newObj = nullptr;
                 if (currentBBox->GetVertices() && currentBBox->GetVertexCount() > 0) {
-                    currentObj = new CustomShape(path.c_str(), currentBBox->GetVertices(), currentBBox->GetVertexCount());
+                    newObj = new CustomShape(path.c_str(), currentBBox->GetVertices(), currentBBox->GetVertexCount());
+
+                    // Fazer o novo objeto começar já selecionado
+                    if (Movable* mov = dynamic_cast<Movable*>(newObj)) {
+                        mov->selected = true;
+                    }
                 }
 
-                scene->Add(currentObj, MOVING);
+                if (newObj) {
+                    scene->Add(newObj, MOVING);
+                }
                 currentFilename = path;
             }
         }
@@ -152,36 +177,66 @@ void CollisionT::Update()
         }
     }
 
+    // Desselecionar todos ao clicar fora (sobrescrito se o clique atingir algum, atravs do Movable)
+    // Não desseleciona se o menu radial estiver aberto (tecla E)
+    if (mouseClicked && !window->KeyDown(VK_SHIFT) && !window->KeyDown('E')) {
+        scene->Begin();
+        Object* obj = nullptr;
+        while ((obj = scene->Next()) != nullptr) {
+            if (Movable* mov = dynamic_cast<Movable*>(obj)) {
+                mov->selected = false;
+            }
+        }
+    }
+
+    // Deletar selecionados
+    if (window->KeyPress(VK_DELETE)) {
+        scene->Begin();
+        Object* obj = nullptr;
+        while ((obj = scene->Next()) != nullptr) {
+            if (Movable* mov = dynamic_cast<Movable*>(obj)) {
+                if (mov->selected) {
+                    scene->Delete(obj, MOVING);
+                }
+            }
+        }
+    }
+
     // deslocamento padro
     float delta = 100 * gameTime;
 
-    if (currentObj) {
-        // desloca objeto selecionado
-        if (window->KeyDown(VK_RIGHT))
-            currentObj->Translate(delta, 0);
-        if (window->KeyDown(VK_LEFT))
-            currentObj->Translate(-delta, 0);
-        if (window->KeyDown(VK_UP))
-            currentObj->Translate(0, -delta);
-        if (window->KeyDown(VK_DOWN))
-            currentObj->Translate(0, delta);
+    scene->Begin();
+    Object* objIter = nullptr;
+    while ((objIter = scene->Next()) != nullptr) {
+        Movable* mov = dynamic_cast<Movable*>(objIter);
+        if (mov && mov->selected) {
+            // desloca objeto selecionado
+            if (window->KeyDown(VK_RIGHT))
+                mov->Translate(delta, 0);
+            if (window->KeyDown(VK_LEFT))
+                mov->Translate(-delta, 0);
+            if (window->KeyDown(VK_UP))
+                mov->Translate(0, -delta);
+            if (window->KeyDown(VK_DOWN))
+                mov->Translate(0, delta);
 
-        // altera escala e rotao do objeto
-        if (window->KeyDown('S'))
-            currentObj->Scale(1 + 0.005f * delta);
-        if (window->KeyDown('A'))
-            currentObj->Scale(1 - 0.005f * delta);
-        if (window->KeyDown('Z'))
-            currentObj->Rotate(-0.5f * delta);
-        if (window->KeyDown('X'))
-            currentObj->Rotate(0.5f * delta);
+            // altera escala e rotao do objeto
+            if (window->KeyDown('S'))
+                mov->Scale(1 + 0.005f * delta);
+            if (window->KeyDown('A'))
+                mov->Scale(1 - 0.005f * delta);
+            if (window->KeyDown('Z'))
+                mov->Rotate(-0.5f * delta);
+            if (window->KeyDown('X'))
+                mov->Rotate(0.5f * delta);
 
-        // restaura objeto para seu estado inicial
-        if (window->KeyPress('R'))
-        {
-            currentObj->MoveTo(window->CenterX(), window->CenterY());
-            currentObj->RotateTo(0);
-            currentObj->ScaleTo(1);
+            // restaura objeto para seu estado inicial
+            if (window->KeyPress('R'))
+            {
+                mov->MoveTo(window->CenterX(), window->CenterY());
+                mov->RotateTo(0);
+                mov->ScaleTo(1);
+            }
         }
     }
 
