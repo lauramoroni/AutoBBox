@@ -36,8 +36,8 @@ RadialMenu::~RadialMenu()
 
 void RadialMenu::Update()
 {
-	// Toggle active state with E key
-	if (window->KeyDown('E')) {
+	// Toggle active state with control key
+	if (window->KeyDown(VK_CONTROL)) {
 		// Get selected shapes
 		std::vector<CustomShape*> selectedShapes;
 		CollisionT::scene->Begin();

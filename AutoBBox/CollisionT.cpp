@@ -220,7 +220,7 @@ void CollisionT::Update()
 
     // Desselecionar todos ao clicar fora (sobrescrito se o clique atingir algum, atravs do Movable)
     // N�o desseleciona se o menu radial estiver aberto (tecla E)
-    if (mouseClicked && !window->KeyDown(VK_SHIFT) && !window->KeyDown('E')) {
+    if (mouseClicked && !window->KeyDown(VK_SHIFT) && !window->KeyDown(VK_CONTROL)) {
         scene->Begin();
         Object* obj = nullptr;
         while ((obj = scene->Next()) != nullptr) {
