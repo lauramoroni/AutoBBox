@@ -50,7 +50,7 @@ private:
 
 public:
     static Scene * scene;           // cena do jogo
-    static bool mouseClicked;       // estado global do clique para a frame atual
+    static bool mouseClicked; class RadialMenu* rootMenuObj = nullptr; class RadialMenu* algMenuObj = nullptr; class RadialMenu* logMenuObj = nullptr; class RadialMenu* activeMenu = nullptr; std::vector<class CustomShape*> GetSelectedShapes();       // estado global do clique para a frame atual
 
     void Init();                    // inicializa��o
     void Update();                  // atualiza��o

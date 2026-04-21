@@ -15,9 +15,11 @@
 #include "Mouse.h"
 #include "AutoBBox.h"
 #include "RadialMenu.h"
+#include "StbImage.h" // Adicionado para suportar o StbImage nas opções
 #include <windows.h>
 #include <commdlg.h>
 #include <string>
+#include <memory>
 
 // ------------------------------------------------------------------------------
 
@@ -71,6 +73,21 @@ std::string saveFileDialog(const std::string& defaultName) {
     return "";
 }
 
+std::vector<CustomShape*> CollisionT::GetSelectedShapes() {
+    std::vector<CustomShape*> selected;
+    if (!scene) return selected;
+    scene->Begin();
+    Object* obj = nullptr;
+    while ((obj = scene->Next()) != nullptr) {
+        if (CustomShape* cs = dynamic_cast<CustomShape*>(obj)) {
+            if (cs->selected) {
+                selected.push_back(cs);
+            }
+        }
+    }
+    return selected;
+}
+
 void CollisionT::Init()
 {
     // cria fontes para exibio de texto
@@ -85,8 +102,93 @@ void CollisionT::Init()
     // adiciona mouse na cena
     scene->Add(new Mouse(), MOVING);
 
-    // adiciona radial menu
-    scene->Add(new RadialMenu(), MOVING);
+    // Lambda que condensa todo o processamento StbImage antigo, extraído do Update
+    auto applyOperation = [this](const std::string& opName) {
+        auto selectedShapes = this->GetSelectedShapes();
+        if (selectedShapes.size() != 2) return;
+
+        std::string f1 = selectedShapes[0]->imgFilename;
+        std::string f2 = selectedShapes[1]->imgFilename;
+
+        StbImage img1(f1.c_str());
+        StbImage img2(f2.c_str());
+
+        std::string outFilename;
+
+        if (opName == "Sum") {
+            img1.sum(img2, MEAN);
+            outFilename = "Resources/sum.png";
+        }
+        else if (opName == "Subtract") {
+            img1.subtract(img2, MEAN);
+            outFilename = "Resources/sub.png";
+        }
+        else if (opName == "Multiply") {
+            img1.multiply(img2, MEAN);
+            outFilename = "Resources/mul.png";
+        }
+        else if (opName == "Divide") {
+            img1.divide(img2, MEAN);
+            outFilename = "Resources/div.png";
+        }
+        else if (opName == "AND") {
+            img1.logicalAnd(img2, MEAN);
+            outFilename = "Resources/and.png";
+        }
+        else if (opName == "OR") {
+            img1.logicalOr(img2, MEAN);
+            outFilename = "Resources/or.png";
+        }
+        else if (opName == "XOR") {
+            img1.logicalXor(img2, MEAN);
+            outFilename = "Resources/xor.png";
+        }
+
+        if (!outFilename.empty()) {
+            AutoBBox* bbox = new AutoBBox(outFilename.c_str());
+            bbox->GeneratePolyBBox();
+
+            if (bbox->GetVertices() && bbox->GetVertexCount() > 0) {
+                CustomShape* newShape = new CustomShape(outFilename.c_str(), bbox->GetVertices(), bbox->GetVertexCount());
+                newShape->selected = true;
+
+                selectedShapes[0]->selected = false;
+                selectedShapes[1]->selected = false;
+
+                CollisionT::scene->Add(newShape, MOVING);
+            }
+            delete bbox;
+        }
+    };
+
+    RadialMenuOptions rootMenu;
+    RadialMenuOptions algMenu;
+    RadialMenuOptions logMenu;
+
+    // Opções do Root Menu
+    rootMenu.AddOption("Algebricas", [this]() {
+        this->activeMenu = this->algMenuObj;
+        this->activeMenu->MoveTo(window->MouseX(), window->MouseY());
+    });
+    rootMenu.AddOption("Binarias", [this]() {
+        this->activeMenu = this->logMenuObj;
+        this->activeMenu->MoveTo(window->MouseX(), window->MouseY());
+    });
+
+    // Opções de Álgebra
+    algMenu.AddOption("Sum", [applyOperation]() { applyOperation("Sum"); });
+    algMenu.AddOption("Subtract", [applyOperation]() { applyOperation("Subtract"); });
+    algMenu.AddOption("Multiply", [applyOperation]() { applyOperation("Multiply"); });
+    algMenu.AddOption("Divide", [applyOperation]() { applyOperation("Divide"); });
+
+    // Opções Lógicas
+    logMenu.AddOption("AND", [applyOperation]() { applyOperation("AND"); });
+    logMenu.AddOption("OR", [applyOperation]() { applyOperation("OR"); });
+    logMenu.AddOption("XOR", [applyOperation]() { applyOperation("XOR"); });
+
+    rootMenuObj = new RadialMenu(rootMenu);
+    algMenuObj = new RadialMenu(algMenu);
+    logMenuObj = new RadialMenu(logMenu);
 }
 
 // ------------------------------------------------------------------------------
@@ -111,51 +213,35 @@ void CollisionT::Update()
         viewBBox = !viewBBox;
 
     static bool prevMouse = false;
-    bool currMouse = window->KeyDown(VK_LBUTTON);
+	bool currMouse = window->KeyDown(VK_LBUTTON);
 	OutputDebugStringA(("Mouse state: " + std::to_string(currMouse) + "\n").c_str());
-    mouseClicked = currMouse && !prevMouse;
-    prevMouse = currMouse;
-    
-    if (window->KeyDown('A')) {
+	mouseClicked = currMouse && !prevMouse;
+	prevMouse = currMouse;
+
+	if (window->KeyDown(VK_CONTROL) && GetSelectedShapes().size() == 2) {
+		if (!activeMenu) {
+			activeMenu = rootMenuObj;
+		}
+		if (activeMenu) {
+			activeMenu->Update();
+		}
+	} else {
+		if (activeMenu) {
+			activeMenu->Deactivate();
+			activeMenu = nullptr;
+		}
+		rootMenuObj->Deactivate();
+		algMenuObj->Deactivate();
+		logMenuObj->Deactivate();
+	}
+
+	if (window->KeyDown('A')) {
         Sprite* sprite1 = new Sprite("Resources/img1.png");
         Sprite* sprite2 = new Sprite("Resources/img2.png");
 
         scene->Add(new CustomShape("Resources/img1.png", nullptr, 0), MOVING);
         scene->Add(new CustomShape("Resources/img2.png", nullptr, 0), MOVING);
     }
-
-    if (window->KeyPress('Q')) {
-
-        StbImage img1("Resources/mcqueen_rodao.png");
-		StbImage img2("Resources/The-Witcher-3.png");
-
-		StbImage result = img1.sum(img2);
-        
-		scene->Add(new CustomShape("Resources/sum.png", nullptr, 0), MOVING);
-	}
-    else if (window->KeyPress('T')) {
-        StbImage img1("Resources/mcqueen_rodao.png");
-		StbImage img2("Resources/The-Witcher-3.png");
-
-		StbImage result = img1.subtract(img2);
-
-		scene->Add(new CustomShape("Resources/sub.png", nullptr, 0), MOVING);
-	}
-    else if (window->KeyPress('M')) {
-        StbImage img1("Resources/mcqueen_rodao.png");
-        StbImage img2("Resources/The-Witcher-3.png");
-
-        StbImage result = img1.multiply(img2);
-
-        scene->Add(new CustomShape("Resources/mul.png", nullptr, 0), MOVING);
-    } else if (window->KeyPress('D')) {
-        StbImage img1("Resources/mcqueen_rodao.png");
-        StbImage img2("Resources/The-Witcher-3.png");
-        StbImage result = img1.divide(img2);
-		StbImage rotated = result.rotate(45).translate(31, 40);
-        scene->Add(new CustomShape("Resources/translate.png", nullptr, 0), MOVING);
-	}
-	
 
     // upload button simulation (canto superior direito)
     if (mouseClicked) {
@@ -307,6 +393,10 @@ void CollisionT::Draw()
     // desenha bounding box dos objetos
     if (viewBBox)
         scene->DrawBBox();
+
+    if (activeMenu) {
+        activeMenu->Draw();
+    }
 }
 
 // ------------------------------------------------------------------------------
@@ -320,6 +410,10 @@ void CollisionT::Finalize()
     delete scene;
     delete font;
     delete bold;
+
+    if (rootMenuObj) delete rootMenuObj;
+    if (algMenuObj) delete algMenuObj;
+    if (logMenuObj) delete logMenuObj;
 }
 
 // ------------------------------------------------------------------------------
