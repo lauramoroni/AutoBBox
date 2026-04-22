@@ -1,11 +1,11 @@
 /**********************************************************************************
-// AutoBBox (Cdigo Fonte)
+// AutoBBox (Codigo Fonte)
 //
-// Criao:     26 Jul 2019
+// Criacao:     26 Jul 2019
 // Atualizacao: 28 Set 2023
 // Compilador:  Visual C++ 2022
 //
-// Descrio:   Teste de Coliso
+// Descricao:   Teste de Colisao
 //
 **********************************************************************************/
 
@@ -23,7 +23,7 @@
 
 // ------------------------------------------------------------------------------
 
-Scene * CollisionT::scene = nullptr;            // cena do jogo
+Scene* CollisionT::scene = nullptr;            // cena do jogo
 bool CollisionT::mouseClicked = false;          // clique do mouse
 
 // ------------------------------------------------------------------------------
@@ -35,7 +35,10 @@ std::string openFileDialog() {
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = NULL;
-    ofn.lpstrFilter = "PNG Files\0*.png\0All Files\0*.*\0";
+
+    // Filtro atualizado para suportar PNG, JPG, JPEG e PGM
+    ofn.lpstrFilter = "Image Files\0*.png;*.jpg;*.jpeg;*.pgm\0All Files\0*.*\0";
+
     ofn.lpstrFile = filename;
     ofn.nMaxFile = MAX_PATH;
     ofn.lpstrTitle = "Selecione uma Imagem";
@@ -51,7 +54,7 @@ std::string saveFileDialog(const std::string& defaultName) {
     char filename[MAX_PATH];
     ZeroMemory(&filename, sizeof(filename));
 
-    // Define nome padr�o
+    // Define nome padrão
     if (!defaultName.empty()) {
         strncpy_s(filename, defaultName.c_str(), MAX_PATH - 1);
     }
@@ -90,7 +93,7 @@ std::vector<CustomShape*> CollisionT::GetSelectedShapes() {
 
 void CollisionT::Init()
 {
-    // cria fontes para exibio de texto
+    // cria fontes para exibicao de texto
     font = new Font("Resources/Tahoma14.png");
     font->Spacing("Resources/Tahoma14.dat");
     bold = new Font("Resources/Tahoma14b.png");
@@ -137,27 +140,13 @@ void CollisionT::Init()
 
         StbImage result(0, 0, 0, nullptr);
 
-        if (opName == "Sum") {
-            result = img1.sum(img2, MEAN);
-        }
-        else if (opName == "Subtract") {
-            result = img1.subtract(img2, MEAN);
-        }
-        else if (opName == "Multiply") {
-            result = img1.multiply(img2, MEAN);
-        }
-        else if (opName == "Divide") {
-            result = img1.divide(img2, MEAN);
-        }
-        else if (opName == "AND") {
-            result = img1.logicalAnd(img2, MEAN);
-        }
-        else if (opName == "OR") {
-            result = img1.logicalOr(img2, MEAN);
-        }
-        else if (opName == "XOR") {
-            result = img1.logicalXor(img2, MEAN);
-        }
+        if (opName == "Sum") result = img1.sum(img2, MEAN);
+        else if (opName == "Subtract") result = img1.subtract(img2, MEAN);
+        else if (opName == "Multiply") result = img1.multiply(img2, MEAN);
+        else if (opName == "Divide") result = img1.divide(img2, MEAN);
+        else if (opName == "AND") result = img1.logicalAnd(img2, MEAN);
+        else if (opName == "OR") result = img1.logicalOr(img2, MEAN);
+        else if (opName == "XOR") result = img1.logicalXor(img2, MEAN);
 
         if (result.pixel_data) {
             result.save(outFilename.c_str());
@@ -178,12 +167,72 @@ void CollisionT::Init()
             }
             delete bbox;
         }
-    };
+        };
+
+    // Lambda para lidar com transformações de espaço de cor (Cores e Recomposição)
+    auto applySpaceTransform = [this](const std::string& opName) {
+        auto selectedShapes = this->GetSelectedShapes();
+        if (selectedShapes.size() != 1) return;
+
+        std::string filename = selectedShapes[0]->imgFilename;
+        StbImage img(filename.c_str());
+
+        // Carrega propriedades físicas
+        float scale = selectedShapes[0]->Scale();
+        float rot = selectedShapes[0]->Rotation();
+
+        if (scale != 1.0f) img = img.scale(scale, scale);
+        if (rot != 0.0f) img = img.rotate(rot);
+
+        std::vector<StbImage> results;
+        if (opName == "CMY") results = img.toCMY();
+        else if (opName == "CMYK") results = img.toCMYK();
+        else if (opName == "HSB") results = img.toHSB();
+        else if (opName == "HSL") results = img.toHSL();
+        else if (opName == "YUV") results = img.toYUV();
+        else if (opName == "ExtractChannels") {
+            results.push_back(img.extractChannelR_color());
+            results.push_back(img.extractChannelG_color());
+            results.push_back(img.extractChannelB_color());
+        }
+
+        selectedShapes[0]->selected = false;
+
+        static int transCounter = 0;
+        transCounter++;
+
+        for (size_t i = 0; i < results.size(); ++i) {
+            std::string outFilename = "Resources/~temp_" + opName + "_" + std::to_string(transCounter) + "_" + std::to_string(i) + ".png";
+
+            if (results[i].pixel_data) {
+                results[i].save(outFilename.c_str());
+
+                AutoBBox* bbox = new AutoBBox(outFilename.c_str());
+                bbox->GeneratePolyBBox();
+
+                if (bbox->GetVertices() && bbox->GetVertexCount() > 0) {
+                    CustomShape* newShape = new CustomShape(outFilename.c_str(), bbox->GetVertices(), bbox->GetVertexCount());
+                    newShape->selected = true;
+
+                    // Distribuir itens diagonalmente para não ficarem escondidos
+                    float offsetX = (i * 80.0f) - ((results.size() - 1) * 40.0f);
+                    float offsetY = (i * 30.0f);
+
+                    newShape->MoveTo((window->Width() - 144) / 2.0f + offsetX, window->CenterY() + offsetY);
+
+                    CollisionT::scene->Add(newShape, MOVING);
+                }
+                delete bbox;
+            }
+        }
+        };
 
     RadialMenuOptions rootMenu;
     RadialMenuOptions algMenu;
     RadialMenuOptions logMenu;
     RadialMenuOptions singleMenu;
+    RadialMenuOptions colorsMenu;
+    RadialMenuOptions recomposeMenu;
 
     // Menu para um item selecionado
     singleMenu.AddOption("Export BBox", [this]() {
@@ -207,7 +256,7 @@ void CollisionT::Init()
             bbox.GeneratePolyBBox();
             bbox.WriteVerticesToFile(savePath.c_str());
         }
-    });
+        });
 
     singleMenu.AddOption("Export Image", [this]() {
         auto selectedShapes = this->GetSelectedShapes();
@@ -247,21 +296,22 @@ void CollisionT::Init()
             if (rot != 0.0f) img = img.rotate(rot);
             img.save(path);
         }
-    });
+        });
 
-    singleMenu.AddOption("Colors", []() {
-        // Por enquanto nenhuma implementacao
-    });
+    singleMenu.AddOption("Colors", [this]() {
+        this->activeMenu = this->colorsMenuObj;
+        this->activeMenu->MoveTo(window->MouseX(), window->MouseY());
+        });
 
-    // Opções do Root Menu
+    // Opções do Root Menu (Itens Duplos)
     rootMenu.AddOption("Algebricas", [this]() {
         this->activeMenu = this->algMenuObj;
         this->activeMenu->MoveTo(window->MouseX(), window->MouseY());
-    });
+        });
     rootMenu.AddOption("Binarias", [this]() {
         this->activeMenu = this->logMenuObj;
         this->activeMenu->MoveTo(window->MouseX(), window->MouseY());
-    });
+        });
 
     // Opções de Álgebra
     algMenu.AddOption("Sum", [applyOperation]() { applyOperation("Sum"); });
@@ -274,84 +324,109 @@ void CollisionT::Init()
     logMenu.AddOption("OR", [applyOperation]() { applyOperation("OR"); });
     logMenu.AddOption("XOR", [applyOperation]() { applyOperation("XOR"); });
 
+    // Opções de Cores
+    colorsMenu.AddOption("Extract Channels", [applySpaceTransform]() { applySpaceTransform("ExtractChannels"); });
+    colorsMenu.AddOption("Recompose", [this]() {
+        this->activeMenu = this->recomposeMenuObj;
+        this->activeMenu->MoveTo(window->MouseX(), window->MouseY());
+        });
+
+    // Opções de Recomposição
+    recomposeMenu.AddOption("CMY", [applySpaceTransform]() { applySpaceTransform("CMY"); });
+    recomposeMenu.AddOption("CMYK", [applySpaceTransform]() { applySpaceTransform("CMYK"); });
+    recomposeMenu.AddOption("HSB", [applySpaceTransform]() { applySpaceTransform("HSB"); });
+    recomposeMenu.AddOption("HSL", [applySpaceTransform]() { applySpaceTransform("HSL"); });
+    recomposeMenu.AddOption("YUV", [applySpaceTransform]() { applySpaceTransform("YUV"); });
+
+    // Inicialização dos Objetos do Menu
     rootMenuObj = new RadialMenu(rootMenu);
     algMenuObj = new RadialMenu(algMenu);
     logMenuObj = new RadialMenu(logMenu);
     singleMenuObj = new RadialMenu(singleMenu);
+    colorsMenuObj = new RadialMenu(colorsMenu);
+    recomposeMenuObj = new RadialMenu(recomposeMenu);
 }
 
 // ------------------------------------------------------------------------------
 
 void CollisionT::Update()
 {
-	// desseleciona figuras com a tecla ESC e fecha menu se aberto
-	if (window->KeyPress(VK_ESCAPE)) {
-		if (activeMenu) {
-			activeMenu->Deactivate();
-			activeMenu = nullptr;
-			rootMenuObj->Deactivate();
-			algMenuObj->Deactivate();
-			logMenuObj->Deactivate();
-			singleMenuObj->Deactivate();
-		} else {
-			scene->Begin();
-			Object* obj = nullptr;
-			while ((obj = scene->Next()) != nullptr) {
-				if (Movable* mov = dynamic_cast<Movable*>(obj)) {
-					if (mov->selected) {
-						mov->selected = false;
-					}
-				}
-			}
-		}
-	}
+    // desseleciona figuras com a tecla ESC e fecha menu se aberto
+    if (window->KeyPress(VK_ESCAPE)) {
+        if (activeMenu) {
+            activeMenu->Deactivate();
+            activeMenu = nullptr;
+            rootMenuObj->Deactivate();
+            algMenuObj->Deactivate();
+            logMenuObj->Deactivate();
+            singleMenuObj->Deactivate();
+            colorsMenuObj->Deactivate();
+            recomposeMenuObj->Deactivate();
+        }
+        else {
+            scene->Begin();
+            Object* obj = nullptr;
+            while ((obj = scene->Next()) != nullptr) {
+                if (Movable* mov = dynamic_cast<Movable*>(obj)) {
+                    if (mov->selected) {
+                        mov->selected = false;
+                    }
+                }
+            }
+        }
+    }
 
-	// habilita/desabilita bounding box
-	if (window->KeyPress('B'))
-		viewBBox = !viewBBox;
+    // habilita/desabilita bounding box
+    if (window->KeyPress('B'))
+        viewBBox = !viewBBox;
 
-	static bool prevMouse = false;
-	bool currMouse = window->KeyDown(VK_LBUTTON);
-	mouseClicked = currMouse && !prevMouse;
-	prevMouse = currMouse;
+    static bool prevMouse = false;
+    bool currMouse = window->KeyDown(VK_LBUTTON);
+    mouseClicked = currMouse && !prevMouse;
+    prevMouse = currMouse;
 
-	static bool prevRMouse = false;
-	bool currRMouse = window->KeyDown(VK_RBUTTON);
-	bool rMouseClicked = currRMouse && !prevRMouse;
-	prevRMouse = currRMouse;
+    static bool prevRMouse = false;
+    bool currRMouse = window->KeyDown(VK_RBUTTON);
+    bool rMouseClicked = currRMouse && !prevRMouse;
+    prevRMouse = currRMouse;
 
-	if (rMouseClicked) {
-		size_t selectedCount = GetSelectedShapes().size();
-		if (activeMenu) activeMenu->Deactivate();
-		rootMenuObj->Deactivate();
-		algMenuObj->Deactivate();
-		logMenuObj->Deactivate();
-		singleMenuObj->Deactivate();
-		activeMenu = nullptr;
+    if (rMouseClicked) {
+        size_t selectedCount = GetSelectedShapes().size();
+        if (activeMenu) activeMenu->Deactivate();
+        rootMenuObj->Deactivate();
+        algMenuObj->Deactivate();
+        logMenuObj->Deactivate();
+        singleMenuObj->Deactivate();
+        colorsMenuObj->Deactivate();
+        recomposeMenuObj->Deactivate();
+        activeMenu = nullptr;
 
-		if (selectedCount == 2) {
-			activeMenu = rootMenuObj;
-		} else if (selectedCount == 1) {
-			activeMenu = singleMenuObj;
-		}
-	}
+        if (selectedCount == 2) {
+            activeMenu = rootMenuObj;
+        }
+        else if (selectedCount == 1) {
+            activeMenu = singleMenuObj;
+        }
+    }
 
-	if (activeMenu) {
-		activeMenu->Update();
-		// Se apos o update o "mouseClicked" ainda estiver ativo e foi consumido com clique fora
-		// ele vai fechar o menu. Isso garante que nao continue a desenhar o menu.
-		if (mouseClicked) {
-			activeMenu->Deactivate();
-			activeMenu = nullptr;
-			rootMenuObj->Deactivate();
-			algMenuObj->Deactivate();
-			logMenuObj->Deactivate();
-			singleMenuObj->Deactivate();
-			mouseClicked = false;
-		}
-	}
+    if (activeMenu) {
+        activeMenu->Update();
+        // Se apos o update o "mouseClicked" ainda estiver ativo e foi consumido com clique fora
+        // ele vai fechar o menu. Isso garante que nao continue a desenhar o menu.
+        if (mouseClicked) {
+            activeMenu->Deactivate();
+            activeMenu = nullptr;
+            rootMenuObj->Deactivate();
+            algMenuObj->Deactivate();
+            logMenuObj->Deactivate();
+            singleMenuObj->Deactivate();
+            colorsMenuObj->Deactivate();
+            recomposeMenuObj->Deactivate();
+            mouseClicked = false;
+        }
+    }
 
-	if (window->KeyDown('A')) {
+    if (window->KeyDown('A')) {
         Sprite* sprite1 = new Sprite("Resources/img1.png");
         Sprite* sprite2 = new Sprite("Resources/img2.png");
 
@@ -375,12 +450,11 @@ void CollisionT::Update()
         float halfW = btnUpload ? (btnUpload->Width() / 2.0f) : 39.0f;
         float halfH = btnUpload ? (btnUpload->Height() / 2.0f) : 13.0f;
 
-        if (mx > (btnX - halfW) && mx < (btnX + halfW) && my > (btnY - halfH) && my < (btnY + halfH)) {
+        if (mx > (btnX - halfW) && mx < (btnX + halfW) && my >(btnY - halfH) && my < (btnY + halfH)) {
             std::string path = openFileDialog();
             if (!path.empty()) {
-                // Sem remover o objeto anterior
 
-                // Remove bounding box anterior (apenas visualiza��o / �ltimo)
+                // Remove bounding box anterior (apenas visualização / último)
                 if (currentBBox) {
                     delete currentBBox;
                     currentBBox = nullptr;
@@ -408,30 +482,10 @@ void CollisionT::Update()
                 currentFilename = path;
             }
         }
-        
-        if (false) {
-            // Extrai o nome base do arquivo para sugerir no di�logo
-            std::string base_name = currentFilename;
-            size_t last_slash = base_name.find_last_of("/\\");
-            if (std::string::npos != last_slash) {
-                base_name.erase(0, last_slash + 1);
-            }
-            size_t last_dot = base_name.find_last_of(".");
-            if (std::string::npos != last_dot) {
-                base_name.erase(last_dot);
-            }
-            base_name += "_vertices.txt";
-
-            // Abre di�logo para escolher onde salvar
-            std::string savePath = saveFileDialog(base_name);
-            if (!savePath.empty()) {
-                currentBBox->WriteVerticesToFile(savePath.c_str());
-            }
-        }
     }
 
-    // Desselecionar todos ao clicar fora (sobrescrito se o clique atingir algum, atravs do Movable)
-    // N�o desseleciona se o menu radial estiver aberto (tecla E)
+    // Desselecionar todos ao clicar fora
+    // Não desseleciona se o menu radial estiver aberto (tecla E)
     if (mouseClicked && !window->KeyDown(VK_SHIFT)) {
         scene->Begin();
         Object* obj = nullptr;
@@ -455,7 +509,7 @@ void CollisionT::Update()
         }
     }
 
-    // deslocamento padro
+    // deslocamento padrão
     float delta = 100 * gameTime;
 
     scene->Begin();
@@ -464,24 +518,16 @@ void CollisionT::Update()
         Movable* mov = dynamic_cast<Movable*>(objIter);
         if (mov && mov->selected) {
             // desloca objeto selecionado
-            if (window->KeyDown(VK_RIGHT))
-                mov->Translate(delta, 0);
-            if (window->KeyDown(VK_LEFT))
-                mov->Translate(-delta, 0);
-            if (window->KeyDown(VK_UP))
-                mov->Translate(0, -delta);
-            if (window->KeyDown(VK_DOWN))
-                mov->Translate(0, delta);
+            if (window->KeyDown(VK_RIGHT)) mov->Translate(delta, 0);
+            if (window->KeyDown(VK_LEFT)) mov->Translate(-delta, 0);
+            if (window->KeyDown(VK_UP)) mov->Translate(0, -delta);
+            if (window->KeyDown(VK_DOWN)) mov->Translate(0, delta);
 
-            // altera escala e rotao do objeto
-            if (window->KeyDown('S'))
-                mov->Scale(1 + 0.005f * delta);
-            if (window->KeyDown('A'))
-                mov->Scale(1 - 0.005f * delta);
-            if (window->KeyDown('Z'))
-                mov->Rotate(-0.5f * delta);
-            if (window->KeyDown('X'))
-                mov->Rotate(0.5f * delta);
+            // altera escala e rotação do objeto
+            if (window->KeyDown('S')) mov->Scale(1 + 0.005f * delta);
+            if (window->KeyDown('A')) mov->Scale(1 - 0.005f * delta);
+            if (window->KeyDown('Z')) mov->Rotate(-0.5f * delta);
+            if (window->KeyDown('X')) mov->Rotate(0.5f * delta);
 
             // restaura objeto para seu estado inicial
             if (window->KeyPress('R'))
@@ -520,11 +566,6 @@ void CollisionT::Draw()
         btnUpload->Draw(btnX, btnY, Layer::FRONT);
     }
 
-    
-    if (false) {
-        
-    }
-
     // desenha bounding box dos objetos
     if (viewBBox)
         scene->DrawBBox();
@@ -555,14 +596,16 @@ void CollisionT::Finalize()
     if (algMenuObj) delete algMenuObj;
     if (logMenuObj) delete logMenuObj;
     if (singleMenuObj) delete singleMenuObj;
+    if (colorsMenuObj) delete colorsMenuObj;
+    if (recomposeMenuObj) delete recomposeMenuObj;
 }
 
 // ------------------------------------------------------------------------------
 //                                  WinMain                                      
 // ------------------------------------------------------------------------------
 
-int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
-                     _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
+int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
     Engine* engine = new Engine();
 
@@ -580,7 +623,3 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     delete engine;
     return status;
 }
-
-// ----------------------------------------------------------------------------
-
-

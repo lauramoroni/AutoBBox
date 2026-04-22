@@ -1,11 +1,11 @@
 /**********************************************************************************
-// CollisionT (Arquivo de Cabe�alho)
+// CollisionT (Arquivo de Cabeçalho)
 //
-// Cria��o:     26 Jul 2019
-// Atualiza��o: 28 Set 2023
+// Criação:     26 Jul 2019
+// Atualização: 28 Set 2023
 // Compilador:  Visual C++ 2022
 //
-// Descri��o:   Teste de Colis�o
+// Descrição:   Teste de Colisão
 //
 **********************************************************************************/
 
@@ -38,27 +38,37 @@ enum Objs { MOUSE, CUSTOM };
 class CollisionT : public Game
 {
 private:
-    Font * font = nullptr;          // exibio de texto normal
-    Font * bold = nullptr;          // exibio de texto negrito
-    Sprite * background = nullptr;  // background da tela
-    Sprite * sideMenu = nullptr;    // background do menu lateral
-    Sprite * btnUpload = nullptr;   // botao de upload
+    Font* font = nullptr;          // exibio de texto normal
+    Font* bold = nullptr;          // exibio de texto negrito
+    Sprite* background = nullptr;  // background da tela
+    Sprite* sideMenu = nullptr;    // background do menu lateral
+    Sprite* btnUpload = nullptr;   // botao de upload
 
-    Object * currentObj = nullptr;
+    Object* currentObj = nullptr;
     std::string currentFilename;    // nome do arquivo atual carregado
     AutoBBox* currentBBox = nullptr; // bounding box atual para preview e save
 
-    bool viewBBox = true;           // visualiza��o da bounding box (let's default to true maybe or keep false)
-    stringstream text;              // convers�o para texto
+    bool viewBBox = true;           // visualização da bounding box 
+    stringstream text;              // conversão para texto
 
 public:
-    static Scene * scene;           // cena do jogo
-    static bool mouseClicked; class RadialMenu* rootMenuObj = nullptr; class RadialMenu* algMenuObj = nullptr; class RadialMenu* logMenuObj = nullptr; class RadialMenu* singleMenuObj = nullptr; class RadialMenu* activeMenu = nullptr; std::vector<class CustomShape*> GetSelectedShapes();       // estado global do clique para a frame atual
+    static Scene* scene;           // cena do jogo
+    static bool mouseClicked;
 
-    void Init();                    // inicializa��o
-    void Update();                  // atualiza��o
+    class RadialMenu* rootMenuObj = nullptr;
+    class RadialMenu* algMenuObj = nullptr;
+    class RadialMenu* logMenuObj = nullptr;
+    class RadialMenu* singleMenuObj = nullptr;
+    class RadialMenu* colorsMenuObj = nullptr;      // Submenu de Cores
+    class RadialMenu* recomposeMenuObj = nullptr;   // Submenu de Recomposição
+    class RadialMenu* activeMenu = nullptr;
+
+    std::vector<class CustomShape*> GetSelectedShapes();       // estado global do clique para a frame atual
+
+    void Init();                    // inicialização
+    void Update();                  // atualização
     void Draw();                    // desenho
-    void Finalize();                // finaliza��o
+    void Finalize();                // finalização
 };
 
 // ---------------------------------------------------------------------------------

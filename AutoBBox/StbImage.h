@@ -3,8 +3,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <vector>
+#include <utility>
 
 enum { MEAN, TRUNCATE };
+
+// Structure to hold a density slicing rule: pixels in [low, high] get color (r,g,b)
+struct DensitySlice {
+    uint8_t low;
+    uint8_t high;
+    uint8_t r, g, b;
+};
 
 class StbImage
 {
@@ -43,6 +52,33 @@ public:
 	StbImage zoomOutExclusion(int factor);							// Zoom out com exclusão
 	StbImage zoomOutMean(int factor);								// Zoom out com média
 	bool save(const char* filename);								// Salva a imagem
+
+
+	StbImage extractChannelR() const;
+	StbImage extractChannelG() const;
+	StbImage extractChannelB() const;
+
+	StbImage extractChannelR_color() const;
+	StbImage extractChannelG_color() const;
+	StbImage extractChannelB_color() const;
+
+	static StbImage recompose(const StbImage& rPlane, const StbImage& gPlane, const StbImage& bPlane);
+
+	std::vector<StbImage> toCMY() const;
+	std::vector<StbImage> toCMYK() const;
+	std::vector<StbImage> toHSB() const;
+	std::vector<StbImage> toHSL() const;
+	std::vector<StbImage> toYUV() const;
+
+	StbImage pseudoColorDensitySlicing(const std::vector<DensitySlice>& slices) const;
+	StbImage pseudoColorRedistribution(
+		const std::vector<uint8_t>& lutR = {},
+		const std::vector<uint8_t>& lutG = {},
+		const std::vector<uint8_t>& lutB = {}) const;
+
 private:
-	void normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method = MEAN); // Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado (média ou truncamento)
+	void normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method = MEAN);
+
+	static void rgbToHSB(float r, float g, float b, float& h, float& s, float& v);
+	static void rgbToHSL(float r, float g, float b, float& h, float& s, float& l);
 };
