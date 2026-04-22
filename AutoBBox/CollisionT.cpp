@@ -185,6 +185,75 @@ void CollisionT::Init()
     RadialMenuOptions rootMenu;
     RadialMenuOptions algMenu;
     RadialMenuOptions logMenu;
+    RadialMenuOptions singleMenu;
+
+    // Menu para um item selecionado
+    singleMenu.AddOption("Export BBox", [this]() {
+        auto selectedShapes = this->GetSelectedShapes();
+        if (selectedShapes.size() != 1) return;
+        std::string filename = selectedShapes[0]->imgFilename;
+        std::string base_name = filename;
+        size_t last_slash = base_name.find_last_of("/\\");
+        if (std::string::npos != last_slash) {
+            base_name.erase(0, last_slash + 1);
+        }
+        size_t last_dot = base_name.find_last_of(".");
+        if (std::string::npos != last_dot) {
+            base_name.erase(last_dot);
+        }
+        base_name += "_vertices.txt";
+
+        std::string savePath = saveFileDialog(base_name);
+        if (!savePath.empty()) {
+            AutoBBox bbox(filename.c_str());
+            bbox.GeneratePolyBBox();
+            bbox.WriteVerticesToFile(savePath.c_str());
+        }
+    });
+
+    singleMenu.AddOption("Export Image", [this]() {
+        auto selectedShapes = this->GetSelectedShapes();
+        if (selectedShapes.size() != 1) return;
+        std::string filename = selectedShapes[0]->imgFilename;
+        std::string base_name = filename;
+        size_t last_slash = base_name.find_last_of("/\\");
+        if (std::string::npos != last_slash) {
+            base_name.erase(0, last_slash + 1);
+        }
+        size_t last_dot = base_name.find_last_of(".");
+        if (std::string::npos != last_dot) {
+            base_name.erase(last_dot);
+        }
+        base_name += "_export.png";
+
+        char path[MAX_PATH];
+        ZeroMemory(&path, sizeof(path));
+        strncpy_s(path, base_name.c_str(), MAX_PATH - 1);
+
+        OPENFILENAMEA ofn;
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = NULL;
+        ofn.lpstrFilter = "PNG Files\0*.png\0All Files\0*.*\0";
+        ofn.lpstrFile = path;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.lpstrTitle = "Salvar Imagem";
+        ofn.lpstrDefExt = "png";
+        ofn.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+
+        if (GetSaveFileNameA(&ofn)) {
+            StbImage img(filename.c_str());
+            float scale = selectedShapes[0]->Scale();
+            float rot = selectedShapes[0]->Rotation();
+            if (scale != 1.0f) img = img.scale(scale, scale);
+            if (rot != 0.0f) img = img.rotate(rot);
+            img.save(path);
+        }
+    });
+
+    singleMenu.AddOption("Colors", []() {
+        // Por enquanto nenhuma implementacao
+    });
 
     // Opções do Root Menu
     rootMenu.AddOption("Algebricas", [this]() {
@@ -210,6 +279,7 @@ void CollisionT::Init()
     rootMenuObj = new RadialMenu(rootMenu);
     algMenuObj = new RadialMenu(algMenu);
     logMenuObj = new RadialMenu(logMenu);
+    singleMenuObj = new RadialMenu(singleMenu);
 }
 
 // ------------------------------------------------------------------------------
@@ -239,12 +309,33 @@ void CollisionT::Update()
 	mouseClicked = currMouse && !prevMouse;
 	prevMouse = currMouse;
 
-	if (window->KeyDown(VK_CONTROL) && GetSelectedShapes().size() == 2) {
-		if (!activeMenu) {
-			activeMenu = rootMenuObj;
-		}
-		if (activeMenu) {
-			activeMenu->Update();
+	if (window->KeyDown(VK_CONTROL)) {
+		size_t selectedCount = GetSelectedShapes().size();
+		if (selectedCount == 2) {
+			if (!activeMenu || activeMenu == singleMenuObj) {
+				if (activeMenu == singleMenuObj) singleMenuObj->Deactivate();
+				activeMenu = rootMenuObj;
+			}
+			if (activeMenu) {
+				activeMenu->Update();
+			}
+		} else if (selectedCount == 1) {
+			if (!activeMenu || (activeMenu != singleMenuObj)) {
+				if (activeMenu) activeMenu->Deactivate();
+				activeMenu = singleMenuObj;
+			}
+			if (activeMenu) {
+				activeMenu->Update();
+			}
+		} else {
+			if (activeMenu) {
+				activeMenu->Deactivate();
+				activeMenu = nullptr;
+			}
+			rootMenuObj->Deactivate();
+			algMenuObj->Deactivate();
+			logMenuObj->Deactivate();
+			singleMenuObj->Deactivate();
 		}
 	} else {
 		if (activeMenu) {
@@ -254,6 +345,7 @@ void CollisionT::Update()
 		rootMenuObj->Deactivate();
 		algMenuObj->Deactivate();
 		logMenuObj->Deactivate();
+		singleMenuObj->Deactivate();
 	}
 
 	if (window->KeyDown('A')) {
@@ -313,8 +405,8 @@ void CollisionT::Update()
                 currentFilename = path;
             }
         }
-        // Bot�o Save (aparece ap`s upload)
-        else if (!currentFilename.empty() && currentBBox && mx > window->Width() - 100 && my >= 50 && my < 90) {
+        
+        if (false) {
             // Extrai o nome base do arquivo para sugerir no di�logo
             std::string base_name = currentFilename;
             size_t last_slash = base_name.find_last_of("/\\");
@@ -425,9 +517,9 @@ void CollisionT::Draw()
         btnUpload->Draw(btnX, btnY, Layer::FRONT);
     }
 
-    // Save
-    if (!currentFilename.empty() && currentBBox) {
-        font->Draw(window->Width() - 90, 60.0f, "[  Save  ]", buttonColor);
+    
+    if (false) {
+        
     }
 
     // desenha bounding box dos objetos
@@ -459,6 +551,7 @@ void CollisionT::Finalize()
     if (rootMenuObj) delete rootMenuObj;
     if (algMenuObj) delete algMenuObj;
     if (logMenuObj) delete logMenuObj;
+    if (singleMenuObj) delete singleMenuObj;
 }
 
 // ------------------------------------------------------------------------------

@@ -42,6 +42,7 @@ public:
 	StbImage zoomInInterpolation(float factor);						// Zoom in com interpolação
 	StbImage zoomOutExclusion(int factor);							// Zoom out com exclusão
 	StbImage zoomOutMean(int factor);								// Zoom out com média
+	bool save(const char* filename);								// Salva a imagem
 private:
 	void normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method = MEAN); // Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado (média ou truncamento)
 };

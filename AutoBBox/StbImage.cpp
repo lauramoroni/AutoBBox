@@ -24,7 +24,7 @@ StbImage::StbImage(const char* filename)
 		return;
 	}
 
-	channels = desired_channels ? desired_channels : channels;		// Se desired_channels for 0, mantém o original
+	channels = desired_channels ? desired_channels : channels;		// Se desired_channels for 0, mantÃ©m o original
 	
 	size = static_cast<size_t>(width * height * channels);
 }
@@ -37,12 +37,12 @@ StbImage::StbImage(int width, int height, int channels, uint8_t* pixel_data): wi
 
 StbImage::~StbImage()
 {
-	stbi_image_free(pixel_data);	// Libera a memória alocada para os dados da imagem
+	stbi_image_free(pixel_data);	// Libera a memÃ³ria alocada para os dados da imagem
 	pixel_data = nullptr;			// Define o ponteiro de dados da imagem como nulo
 	size = 0;						// Define o tamanho como zero
 	width = 0;						// Define a largura como zero
 	height = 0;						// Define a altura como zero
-	channels = 0;					// Define o número de canais como zero
+	channels = 0;					// Define o nÃºmero de canais como zero
 }
 
 StbImage::StbImage(const StbImage& other)
@@ -110,17 +110,17 @@ StbImage& StbImage::operator=(StbImage&& other) noexcept
 
 StbImage StbImage::sum(const StbImage& other, int method)
 {
-	// A altura e largura serão as maiores entre as duas imagens
+	// A altura e largura serÃ£o as maiores entre as duas imagens
 	int height = std::max(this->height, other.height);
 	int width = std::max(this->width, other.width);
 
-	// O número de canais será o maior entre as duas imagens
+	// O nÃºmero de canais serÃ¡ o maior entre as duas imagens
 	int channels = std::max(this->channels, other.channels);
 
-	// Aloca memória para os dados da imagem resultante
+	// Aloca memÃ³ria para os dados da imagem resultante
 	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
 
-	// Soma sem normalização (para evitar overflow, usamos uint16_t para armazenar os resultados intermediários)
+	// Soma sem normalizaÃ§Ã£o (para evitar overflow, usamos uint16_t para armazenar os resultados intermediÃ¡rios)
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
 			for (int c = 0; c < channels; ++c) {
@@ -137,7 +137,7 @@ StbImage StbImage::sum(const StbImage& other, int method)
 		}
 	}
 
-	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o mÃ©todo especificado
 	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
 
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
@@ -145,8 +145,8 @@ StbImage StbImage::sum(const StbImage& other, int method)
 	// Salvar a imagem resultante para teste
 	stbi_write_png("Resources/sum.png", width, height, channels, new_pixel_data, width * channels);
 
-	// Libera a memória alocada para os dados intermediários
-	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
+	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
 	delete[] raw_new_pixel_data;
 
 	return StbImage(width, height, channels, new_pixel_data);
@@ -154,17 +154,17 @@ StbImage StbImage::sum(const StbImage& other, int method)
 
 StbImage StbImage::subtract(const StbImage& other, int method)
 {
-	// A altura e largura serão as maiores entre as duas imagens
+	// A altura e largura serÃ£o as maiores entre as duas imagens
 	int height = std::max(this->height, other.height);
 	int width = std::max(this->width, other.width);
 
-	// O número de canais será o maior entre as duas imagens
+	// O nÃºmero de canais serÃ¡ o maior entre as duas imagens
 	int channels = std::max(this->channels, other.channels);
 
-	// Aloca memória para os dados da imagem resultante
+	// Aloca memÃ³ria para os dados da imagem resultante
 	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
 
-	// Subtração sem normalização (para evitar underflow, usamos uint16_t para armazenar os resultados intermediários)
+	// SubtraÃ§Ã£o sem normalizaÃ§Ã£o (para evitar underflow, usamos uint16_t para armazenar os resultados intermediÃ¡rios)
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
 			for (int c = 0; c < channels; ++c) {
@@ -181,15 +181,15 @@ StbImage StbImage::subtract(const StbImage& other, int method)
 		}
 	}
 
-	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o mÃ©todo especificado
 	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
 	stbi_write_png("Resources/sub.png", width, height, channels, new_pixel_data, width * channels);
 
-	// Libera a memória alocada para os dados intermediários
-	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
+	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
 	delete[] raw_new_pixel_data;
 	
 	return StbImage(width, height, channels, new_pixel_data);
@@ -197,14 +197,14 @@ StbImage StbImage::subtract(const StbImage& other, int method)
 
 StbImage StbImage::multiply(const StbImage& other, int method)
 {
-	// A altura e largura serão as maiores entre as duas imagens
+	// A altura e largura serÃ£o as maiores entre as duas imagens
 	int height = std::max(this->height, other.height);
 	int width = std::max(this->width, other.width);
 
-	// O número de canais será o maior entre as duas imagens
+	// O nÃºmero de canais serÃ¡ o maior entre as duas imagens
 	int channels = std::max(this->channels, other.channels);
 
-	// Aloca memória para os dados da imagem resultante
+	// Aloca memÃ³ria para os dados da imagem resultante
 	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
 
 	for (int y = 0; y < height; ++y) {
@@ -220,15 +220,15 @@ StbImage StbImage::multiply(const StbImage& other, int method)
 		}
 	}
 
-	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o mÃ©todo especificado
 	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
 	stbi_write_png("Resources/mul.png", width, height, channels, new_pixel_data, width * channels);
 
-	// Libera a memória alocada para os dados intermediários
-	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
+	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
 	delete[] raw_new_pixel_data;
 
 	return StbImage(width, height, channels, new_pixel_data);
@@ -236,14 +236,14 @@ StbImage StbImage::multiply(const StbImage& other, int method)
 
 StbImage StbImage::divide(const StbImage& other, int method)
 {
-	// A altura e largura serão as maiores entre as duas imagens
+	// A altura e largura serÃ£o as maiores entre as duas imagens
 	int height = std::max(this->height, other.height);
 	int width = std::max(this->width, other.width);
 
-	// O número de canais será o maior entre as duas imagens
+	// O nÃºmero de canais serÃ¡ o maior entre as duas imagens
 	int channels = std::max(this->channels, other.channels);
 
-	// Aloca memória para os dados da imagem resultante
+	// Aloca memÃ³ria para os dados da imagem resultante
 	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
 
 	for (int y = 0; y < height; ++y) {
@@ -254,20 +254,20 @@ StbImage StbImage::divide(const StbImage& other, int method)
 				int idx_other = (y * other.width + x) * other.channels + c;
 				uint16_t pixel_value_this = (x < this->width && y < this->height && c < this->channels) ? this->pixel_data[idx_this] : 0;
 				uint16_t pixel_value_other = (x < other.width && y < other.height && c < other.channels) ? other.pixel_data[idx_other] : 0;
-				raw_new_pixel_data[idx_result] = (pixel_value_other != 0) ? (pixel_value_this / pixel_value_other) : 255; // Evita divisão por zero
+				raw_new_pixel_data[idx_result] = (pixel_value_other != 0) ? (pixel_value_this / pixel_value_other) : 255; // Evita divisÃ£o por zero
 			}
 		}
 	}
 
-	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o mÃ©todo especificado
 	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
 	stbi_write_png("Resources/div.png", width, height, channels, new_pixel_data, width * channels);
 
-	// Libera a memória alocada para os dados intermediários
-	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
+	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
 	delete[] raw_new_pixel_data;
 
 	return StbImage(width, height, channels, new_pixel_data);
@@ -275,14 +275,14 @@ StbImage StbImage::divide(const StbImage& other, int method)
 
 StbImage StbImage::logicalAnd(const StbImage& other, int method)
 {
-	// A altura e largura serão as menores entre as duas imagens
+	// A altura e largura serÃ£o as menores entre as duas imagens
 	int height = std::min(this->height, other.height);
 	int width = std::min(this->width, other.width);
 
-	// O número de canais será o maior entre as duas imagens
+	// O nÃºmero de canais serÃ¡ o maior entre as duas imagens
 	int channels = std::max(this->channels, other.channels);
 
-	// Aloca memória para os dados da imagem resultante
+	// Aloca memÃ³ria para os dados da imagem resultante
 	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
 
 	for (int y = 0; y < height; ++y) {
@@ -298,15 +298,15 @@ StbImage StbImage::logicalAnd(const StbImage& other, int method)
 		}
 	}
 
-	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o mÃ©todo especificado
 	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
 	stbi_write_png("Resources/and.png", width, height, channels, new_pixel_data, width * channels);
 
-	// Libera a memória alocada para os dados intermediários
-	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
+	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
 	delete[] raw_new_pixel_data;
 
 	return StbImage(width, height, channels, new_pixel_data);
@@ -314,14 +314,14 @@ StbImage StbImage::logicalAnd(const StbImage& other, int method)
 
 StbImage StbImage::logicalOr(const StbImage& other, int method)
 {
-	// A altura e largura serão as maiores entre as duas imagens
+	// A altura e largura serÃ£o as maiores entre as duas imagens
 	int height = std::max(this->height, other.height);
 	int width = std::max(this->width, other.width);
 
-	// O número de canais será o maior entre as duas imagens
+	// O nÃºmero de canais serÃ¡ o maior entre as duas imagens
 	int channels = std::max(this->channels, other.channels);
 
-	// Aloca memória para os dados da imagem resultante
+	// Aloca memÃ³ria para os dados da imagem resultante
 	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
 
 	for (int y = 0; y < height; ++y) {
@@ -337,15 +337,15 @@ StbImage StbImage::logicalOr(const StbImage& other, int method)
 		}
 	}
 
-	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o mÃ©todo especificado
 	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
 	stbi_write_png("Resources/or.png", width, height, channels, new_pixel_data, width * channels);
 
-	// Libera a memória alocada para os dados intermediários
-	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
+	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
 	delete[] raw_new_pixel_data;
 
 	return StbImage(width, height, channels, new_pixel_data);
@@ -353,14 +353,14 @@ StbImage StbImage::logicalOr(const StbImage& other, int method)
 
 StbImage StbImage::logicalXor(const StbImage& other, int method)
 {
-	// A altura e largura serão as maiores entre as duas imagens
+	// A altura e largura serÃ£o as maiores entre as duas imagens
 	int height = std::max(this->height, other.height);
 	int width = std::max(this->width, other.width);
 
-	// O número de canais será o maior entre as duas imagens
+	// O nÃºmero de canais serÃ¡ o maior entre as duas imagens
 	int channels = std::max(this->channels, other.channels);
 
-	// Aloca memória para os dados da imagem resultante
+	// Aloca memÃ³ria para os dados da imagem resultante
 	uint16_t* raw_new_pixel_data = new uint16_t[width * height * channels];
 
 	for (int y = 0; y < height; ++y) {
@@ -376,15 +376,15 @@ StbImage StbImage::logicalXor(const StbImage& other, int method)
 		}
 	}
 
-	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o método especificado
+	// Normaliza os valores dos pixels para o intervalo de 0 a 255 usando o mÃ©todo especificado
 	uint8_t* new_pixel_data = new uint8_t[width * height * channels];
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
 	stbi_write_png("Resources/xor.png", width, height, channels, new_pixel_data, width * channels);
 
-	// Libera a memória alocada para os dados intermediários
-	// O new_pixel_data será liberado pelo destrutor da imagem resultante
+	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
+	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
 	delete[] raw_new_pixel_data;
 
 	return StbImage(width, height, channels, new_pixel_data);
@@ -429,7 +429,7 @@ StbImage StbImage::reflect(bool horizontal, bool vertical) {
 }
 
 StbImage StbImage::shear(float shx, float shy) {
-	// Calculando novo tamanho para não cortar a imagem
+	// Calculando novo tamanho para nÃ£o cortar a imagem
 	int new_width = width + (int)(height * std::abs(shx));
 	int new_height = height + (int)(width * std::abs(shy));
 
@@ -439,7 +439,7 @@ StbImage StbImage::shear(float shx, float shy) {
 	// Inverse mapping para evitar buracos
 	for (int y = 0; y < new_height; ++y) {
 		for (int x = 0; x < new_width; ++x) {
-			// Transformação inversa do cisalhamento
+			// TransformaÃ§Ã£o inversa do cisalhamento
 			int src_x = (int)(x - shx * y);
 			int src_y = (int)(y - shy * x);
 
@@ -458,19 +458,19 @@ StbImage StbImage::applyCompositeTransform(float matrix[3][3]) {
 	uint8_t* new_data = (uint8_t*)malloc(width * height * channels);
 	memset(new_data, 0, width * height * channels);
 
-	// Determinante simples para matriz 2x2 (ignorando translação para a inversão base)
+	// Determinante simples para matriz 2x2 (ignorando translaÃ§Ã£o para a inversÃ£o base)
 	float det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
-	if (std::abs(det) < 0.0001f) return StbImage(width, height, channels, new_data); // Previne divisão por zero
+	if (std::abs(det) < 0.0001f) return StbImage(width, height, channels, new_data); // Previne divisÃ£o por zero
 
 	// Mapeamento inverso
 	for (int dest_y = 0; dest_y < height; ++dest_y) {
 		for (int dest_x = 0; dest_x < width; ++dest_x) {
 
-			// Subtrai translação
+			// Subtrai translaÃ§Ã£o
 			float tx = dest_x - matrix[0][2];
 			float ty = dest_y - matrix[1][2];
 
-			// Inversa da Rotação/Escala/Cisalhamento
+			// Inversa da RotaÃ§Ã£o/Escala/Cisalhamento
 			int src_x = (int)((matrix[1][1] * tx - matrix[0][1] * ty) / det);
 			int src_y = (int)((matrix[0][0] * ty - matrix[1][0] * tx) / det);
 
@@ -490,7 +490,7 @@ StbImage StbImage::rotate(float angle_degrees) {
 	float cosA = std::cos(rad);
 	float sinA = std::sin(rad);
 
-	// Rotação ao redor do centro
+	// RotaÃ§Ã£o ao redor do centro
 	int cx = width / 2;
 	int cy = height / 2;
 
@@ -499,7 +499,7 @@ StbImage StbImage::rotate(float angle_degrees) {
 
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
-			// Translação para o centro, rotação inversa, translação de volta
+			// TranslaÃ§Ã£o para o centro, rotaÃ§Ã£o inversa, translaÃ§Ã£o de volta
 			int dx = x - cx;
 			int dy = y - cy;
 
@@ -666,3 +666,5 @@ void StbImage::normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, i
 		}
 	}
 }
+ 
+bool StbImage::save(const char* filename) { return stbi_write_png(filename, width, height, channels, pixel_data, width * channels) != 0; }
