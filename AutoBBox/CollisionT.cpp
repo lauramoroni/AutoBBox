@@ -102,7 +102,6 @@ void CollisionT::Init()
     // adiciona mouse na cena
     scene->Add(new Mouse(), MOVING);
 
-    // Lambda que condensa todo o processamento StbImage antigo, extraído do Update
     auto applyOperation = [this](const std::string& opName) {
         auto selectedShapes = this->GetSelectedShapes();
         if (selectedShapes.size() != 2) return;
@@ -112,6 +111,20 @@ void CollisionT::Init()
 
         StbImage img1(f1.c_str());
         StbImage img2(f2.c_str());
+
+        // Carrega as propriedades de rotação e escala da cena
+        float scale1 = selectedShapes[0]->Scale();
+        float rot1 = selectedShapes[0]->Rotation();
+
+        float scale2 = selectedShapes[1]->Scale();
+        float rot2 = selectedShapes[1]->Rotation();
+
+        // Aplica transformações fisicas da Engine no buffer de dados da Imagem
+        if (scale1 != 1.0f) img1 = img1.scale(scale1, scale1);
+        if (rot1 != 0.0f) img1 = img1.rotate(rot1);
+
+        if (scale2 != 1.0f) img2 = img2.scale(scale2, scale2);
+        if (rot2 != 0.0f) img2 = img2.rotate(rot2);
 
         std::string outFilename;
 

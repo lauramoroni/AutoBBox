@@ -20,6 +20,11 @@ public:
 	StbImage(int width, int height, int channels, uint8_t* pixel_data);
 	~StbImage();
 
+	StbImage(const StbImage& other);
+	StbImage& operator=(const StbImage& other);
+	StbImage(StbImage&& other) noexcept;
+	StbImage& operator=(StbImage&& other) noexcept;
+
 	StbImage sum(const StbImage& other, int method = MEAN);			// adição de imagens (soma pixel a pixel)
 	StbImage subtract(const StbImage& other, int method = MEAN);	// subtração de imagens (diferença pixel a pixel)
 	StbImage multiply(const StbImage& other, int method = MEAN);	// multiplicação de imagens (multiplicação pixel a pixel)

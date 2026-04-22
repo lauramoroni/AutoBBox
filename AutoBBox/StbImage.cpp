@@ -45,6 +45,68 @@ StbImage::~StbImage()
 	channels = 0;					// Define o número de canais como zero
 }
 
+StbImage::StbImage(const StbImage& other)
+	: width(other.width), height(other.height), channels(other.channels), max_val_grayscale(other.max_val_grayscale), size(other.size)
+{
+	if (other.pixel_data) {
+		pixel_data = (uint8_t*)malloc(size);
+		memcpy(pixel_data, other.pixel_data, size);
+	} else {
+		pixel_data = nullptr;
+	}
+}
+
+StbImage& StbImage::operator=(const StbImage& other)
+{
+	if (this != &other) {
+		stbi_image_free(pixel_data);
+
+		width = other.width;
+		height = other.height;
+		channels = other.channels;
+		max_val_grayscale = other.max_val_grayscale;
+		size = other.size;
+
+		if (other.pixel_data) {
+			pixel_data = (uint8_t*)malloc(size);
+			memcpy(pixel_data, other.pixel_data, size);
+		} else {
+			pixel_data = nullptr;
+		}
+	}
+	return *this;
+}
+
+StbImage::StbImage(StbImage&& other) noexcept
+	: width(other.width), height(other.height), channels(other.channels), max_val_grayscale(other.max_val_grayscale), size(other.size), pixel_data(other.pixel_data)
+{
+	other.pixel_data = nullptr;
+	other.size = 0;
+	other.width = 0;
+	other.height = 0;
+	other.channels = 0;
+}
+
+StbImage& StbImage::operator=(StbImage&& other) noexcept
+{
+	if (this != &other) {
+		stbi_image_free(pixel_data);
+
+		width = other.width;
+		height = other.height;
+		channels = other.channels;
+		max_val_grayscale = other.max_val_grayscale;
+		size = other.size;
+		pixel_data = other.pixel_data;
+
+		other.pixel_data = nullptr;
+		other.size = 0;
+		other.width = 0;
+		other.height = 0;
+		other.channels = 0;
+	}
+	return *this;
+}
 
 StbImage StbImage::sum(const StbImage& other, int method)
 {
@@ -452,6 +514,25 @@ StbImage StbImage::rotate(float angle_degrees) {
 		}
 	}
 	return StbImage(width, height, channels, new_data);
+}
+
+StbImage StbImage::scale(float sx, float sy)
+{
+	int new_width = (int)(width * sx);
+	int new_height = (int)(height * sy);
+	uint8_t* new_data = (uint8_t*)malloc(new_width * new_height * channels);
+	for (int y = 0; y < new_height; ++y) {
+		for (int x = 0; x < new_width; ++x) {
+			int src_x = (int)(x / sx);
+			int src_y = (int)(y / sy);
+			if (src_x >= 0 && src_x < width && src_y >= 0 && src_y < height) {
+				for (int c = 0; c < channels; ++c) {
+					new_data[(y * new_width + x) * channels + c] = pixel_data[(src_y * width + src_x) * channels + c];
+				}
+			}
+		}
+	}
+	return StbImage(new_width, new_height, channels, new_data);
 }
 
 StbImage StbImage::zoomInReplication(float factor) {
