@@ -2,7 +2,7 @@
 // AutoBBox (Cdigo Fonte)
 //
 // Criao:     26 Jul 2019
-// Atualizao: 28 Set 2023
+// Atualizacao: 28 Set 2023
 // Compilador:  Visual C++ 2022
 //
 // Descrio:   Teste de Coliso
@@ -96,6 +96,11 @@ void CollisionT::Init()
     bold = new Font("Resources/Tahoma14b.png");
     bold->Spacing("Resources/Tahoma14b.dat");
 
+    // carregar backgrounds
+    background = new Sprite("Resources/background.png");
+    sideMenu = new Sprite("Resources/side_menu_bg.png");
+    btnUpload = new Sprite("Resources/select_image_button.png");
+
     // cria cena do jogo
     scene = new Scene();
 
@@ -164,6 +169,9 @@ void CollisionT::Init()
             if (bbox->GetVertices() && bbox->GetVertexCount() > 0) {
                 CustomShape* newShape = new CustomShape(outFilename.c_str(), bbox->GetVertices(), bbox->GetVertexCount());
                 newShape->selected = true;
+
+                // Move para o centro da área visível (excluindo menu lateral de 144px)
+                newShape->MoveTo((window->Width() - 144) / 2.0f, window->CenterY());
 
                 selectedShapes[0]->selected = false;
                 selectedShapes[1]->selected = false;
@@ -252,8 +260,13 @@ void CollisionT::Update()
         Sprite* sprite1 = new Sprite("Resources/img1.png");
         Sprite* sprite2 = new Sprite("Resources/img2.png");
 
-        scene->Add(new CustomShape("Resources/img1.png", nullptr, 0), MOVING);
-        scene->Add(new CustomShape("Resources/img2.png", nullptr, 0), MOVING);
+        CustomShape* shape1 = new CustomShape("Resources/img1.png", nullptr, 0);
+        shape1->MoveTo((window->Width() - 144) / 2.0f, window->CenterY());
+        scene->Add(shape1, MOVING);
+
+        CustomShape* shape2 = new CustomShape("Resources/img2.png", nullptr, 0);
+        shape2->MoveTo((window->Width() - 144) / 2.0f, window->CenterY());
+        scene->Add(shape2, MOVING);
     }
 
     // upload button simulation (canto superior direito)
@@ -262,8 +275,12 @@ void CollisionT::Update()
         float mx = window->MouseX();
         float my = window->MouseY();
 
-        // Bot�o Upload
-        if (mx > window->Width() - 100 && my < 40) {
+        float btnX = window->Width() - (144 / 2.0f);
+        float btnY = btnUpload ? (58.0f + btnUpload->Height() / 2.0f) : 58.0f;
+        float halfW = btnUpload ? (btnUpload->Width() / 2.0f) : 39.0f;
+        float halfH = btnUpload ? (btnUpload->Height() / 2.0f) : 13.0f;
+
+        if (mx > (btnX - halfW) && mx < (btnX + halfW) && my > (btnY - halfH) && my < (btnY + halfH)) {
             std::string path = openFileDialog();
             if (!path.empty()) {
                 // Sem remover o objeto anterior
@@ -283,19 +300,20 @@ void CollisionT::Update()
                 if (currentBBox->GetVertices() && currentBBox->GetVertexCount() > 0) {
                     newObj = new CustomShape(path.c_str(), currentBBox->GetVertices(), currentBBox->GetVertexCount());
 
-                    // Fazer o novo objeto come�ar j� selecionado
+                    // Fazer o novo objeto começar já selecionado
                     if (Movable* mov = dynamic_cast<Movable*>(newObj)) {
                         mov->selected = true;
                     }
                 }
 
                 if (newObj) {
+                    newObj->MoveTo((window->Width() - 144) / 2.0f, window->CenterY());
                     scene->Add(newObj, MOVING);
                 }
                 currentFilename = path;
             }
         }
-        // Bot�o Save (aparece ap�s upload)
+        // Bot�o Save (aparece ap`s upload)
         else if (!currentFilename.empty() && currentBBox && mx > window->Width() - 100 && my >= 50 && my < 90) {
             // Extrai o nome base do arquivo para sugerir no di�logo
             std::string base_name = currentFilename;
@@ -389,6 +407,11 @@ void CollisionT::Update()
 
 void CollisionT::Draw()
 {
+    if (background)
+        background->Draw(window->CenterX(), window->CenterY(), Layer::BACK);
+    if (sideMenu)
+        sideMenu->Draw(window->Width() - sideMenu->Width() / 2.0f, window->CenterY(), Layer::LOWER);
+
     // desenha cena
     scene->Draw();
 
@@ -396,7 +419,11 @@ void CollisionT::Draw()
     Color buttonColor{ 0.85f, 0.85f, 0.85f, 1.0f };
 
     // Upload
-    font->Draw(window->Width() - 90, 20.0f, "[ Upload ]", buttonColor);
+    if (btnUpload) {
+        float btnX = window->Width() - (144 / 2.0f);
+        float btnY = 58.0f + (btnUpload->Height() / 2.0f);
+        btnUpload->Draw(btnX, btnY, Layer::FRONT);
+    }
 
     // Save
     if (!currentFilename.empty() && currentBBox) {
@@ -420,6 +447,11 @@ void CollisionT::Finalize()
         delete currentBBox;
         currentBBox = nullptr;
     }
+
+    if (background) delete background;
+    if (sideMenu) delete sideMenu;
+    if (btnUpload) delete btnUpload;
+
     delete scene;
     delete font;
     delete bold;

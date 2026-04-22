@@ -38,8 +38,11 @@ enum Objs { MOUSE, CUSTOM };
 class CollisionT : public Game
 {
 private:
-    Font * font = nullptr;          // exibi��o de texto normal
-    Font * bold = nullptr;          // exibi��o de texto negrito
+    Font * font = nullptr;          // exibio de texto normal
+    Font * bold = nullptr;          // exibio de texto negrito
+    Sprite * background = nullptr;  // background da tela
+    Sprite * sideMenu = nullptr;    // background do menu lateral
+    Sprite * btnUpload = nullptr;   // botao de upload
 
     Object * currentObj = nullptr;
     std::string currentFilename;    // nome do arquivo atual carregado
