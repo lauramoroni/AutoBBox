@@ -20,6 +20,7 @@
 #include <commdlg.h>
 #include <string>
 #include <memory>
+#include <algorithm>
 
 // ------------------------------------------------------------------------------
 
@@ -325,8 +326,8 @@ void CollisionT::Init()
     logMenu.AddOption("XOR", [applyOperation]() { applyOperation("XOR"); });
 
     // Opções de Cores
-    colorsMenu.AddOption("Extract Channels", [applySpaceTransform]() { applySpaceTransform("ExtractChannels"); });
-    colorsMenu.AddOption("Recompose", [this]() {
+    colorsMenu.AddOption("Extract RGB", [applySpaceTransform]() { applySpaceTransform("ExtractChannels"); });
+    colorsMenu.AddOption("Decompose", [this]() {
         this->activeMenu = this->recomposeMenuObj;
         this->activeMenu->MoveTo(window->MouseX(), window->MouseY());
         });
@@ -426,19 +427,6 @@ void CollisionT::Update()
         }
     }
 
-    if (window->KeyDown('A')) {
-        Sprite* sprite1 = new Sprite("Resources/img1.png");
-        Sprite* sprite2 = new Sprite("Resources/img2.png");
-
-        CustomShape* shape1 = new CustomShape("Resources/img1.png", nullptr, 0);
-        shape1->MoveTo((window->Width() - 144) / 2.0f, window->CenterY());
-        scene->Add(shape1, MOVING);
-
-        CustomShape* shape2 = new CustomShape("Resources/img2.png", nullptr, 0);
-        shape2->MoveTo((window->Width() - 144) / 2.0f, window->CenterY());
-        scene->Add(shape2, MOVING);
-    }
-
     // upload button simulation (canto superior direito)
     if (mouseClicked) {
         OutputDebugStringA(("Mouse clicked: " + std::to_string(mouseClicked) + "\n").c_str());
@@ -505,6 +493,135 @@ void CollisionT::Update()
                 if (mov->selected) {
                     scene->Delete(obj, MOVING);
                 }
+            }
+        }
+    }
+
+    bool zoomIn = window->KeyPress('I');
+    bool zoomOut = window->KeyPress('K');
+
+    if (zoomIn || zoomOut) {
+        auto selectedShapes = GetSelectedShapes();
+
+        // Aplica o zoom apenas se houver 1 objeto selecionado
+        if (selectedShapes.size() == 1) {
+            CustomShape* shape = selectedShapes[0];
+            std::string filename = shape->imgFilename;
+            StbImage img(filename.c_str());
+
+            StbImage result(0, 0, 0, nullptr);
+            bool appliedZoom = false;
+
+            if (zoomIn) {
+                // Tecla I: Zoom In (Fator float)
+                result = img.zoomInInterpolation(1.5f);
+                appliedZoom = true;
+            }
+            else if (zoomOut) {
+                // Tecla K: Zoom Out (Fator int)
+                result = img.zoomOutMean(2);
+                appliedZoom = true;
+            }
+
+            if (appliedZoom && result.pixel_data) {
+                static int zoomCounter = 0;
+                std::string outFilename = "Resources/~temp_zoom_" + std::to_string(++zoomCounter) + ".png";
+
+                // Salva a nova imagem processada
+                result.save(outFilename.c_str());
+
+                // Recalcula o Bounding Box para a nova imagem
+                AutoBBox* bbox = new AutoBBox(outFilename.c_str());
+                bbox->GeneratePolyBBox();
+
+                if (bbox->GetVertices() && bbox->GetVertexCount() > 0) {
+                    CustomShape* newShape = new CustomShape(outFilename.c_str(), bbox->GetVertices(), bbox->GetVertexCount());
+                    newShape->selected = true;
+
+                    // Mantém a posição e rotação do objeto original
+                    newShape->MoveTo(shape->X(), shape->Y());
+                    newShape->RotateTo(shape->Rotation());
+
+                    // Substitui a imagem na cena
+                    scene->Delete(shape, MOVING);
+                    scene->Add(newShape, MOVING);
+                }
+                delete bbox;
+            }
+        }
+    }
+
+    bool reflectH = window->KeyPress('H');
+    bool reflectV = window->KeyPress('V');
+    bool shearXPos = window->KeyPress('M');
+    bool shearXNeg = window->KeyPress('N');
+    bool shearYPos = window->KeyPress('J');
+    bool shearYNeg = window->KeyPress('U');
+
+    if (reflectH || reflectV || shearXPos || shearXNeg || shearYPos || shearYNeg) {
+        auto selectedShapes = GetSelectedShapes();
+
+        // Aplica a transformação apenas se houver 1 objeto selecionado
+        if (selectedShapes.size() == 1) {
+            CustomShape* shape = selectedShapes[0];
+            std::string filename = shape->imgFilename;
+            StbImage img(filename.c_str());
+
+            StbImage result(0, 0, 0, nullptr);
+            bool appliedTransform = false;
+
+            // Define o incremento do cisalhamento
+            float shearFactor = 0.15f;
+
+            if (reflectH) {
+                result = img.reflect(true, false);
+                appliedTransform = true;
+            }
+            else if (reflectV) {
+                result = img.reflect(false, true);
+                appliedTransform = true;
+            }
+            else if (shearXPos) {
+                result = img.shear(shearFactor, 0.0f);
+                appliedTransform = true;
+            }
+            else if (shearXNeg) {
+                result = img.shear(-shearFactor, 0.0f);
+                appliedTransform = true;
+            }
+            else if (shearYPos) {
+                result = img.shear(0.0f, shearFactor);
+                appliedTransform = true;
+            }
+            else if (shearYNeg) {
+                result = img.shear(0.0f, -shearFactor);
+                appliedTransform = true;
+            }
+
+            if (appliedTransform && result.pixel_data) {
+                static int transformCounter = 0;
+                std::string outFilename = "Resources/~temp_transform_" + std::to_string(++transformCounter) + ".png";
+
+                // Salva a nova imagem processada
+                result.save(outFilename.c_str());
+
+                // Recalcula o Bounding Box para a nova imagem
+                AutoBBox* bbox = new AutoBBox(outFilename.c_str());
+                bbox->GeneratePolyBBox();
+
+                if (bbox->GetVertices() && bbox->GetVertexCount() > 0) {
+                    CustomShape* newShape = new CustomShape(outFilename.c_str(), bbox->GetVertices(), bbox->GetVertexCount());
+                    newShape->selected = true;
+
+                    // Mantém a posição e rotação do objeto original na cena
+                    newShape->MoveTo(shape->X(), shape->Y());
+                    newShape->RotateTo(shape->Rotation());
+
+                    // Substitui a imagem antiga na cena pela nova transformada
+                    scene->Delete(shape, MOVING);
+                    scene->Add(newShape, MOVING);
+                }
+                delete bbox;
             }
         }
     }

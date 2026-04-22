@@ -77,7 +77,7 @@ public:
 		const std::vector<uint8_t>& lutB = {}) const;
 
 private:
-	void normalize(uint16_t* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method = MEAN);
+	void normalize(int* pixel_data, uint8_t* normalized_pixel_data, int image_elements_size, int method = MEAN);
 
 	static void rgbToHSB(float r, float g, float b, float& h, float& s, float& v);
 	static void rgbToHSL(float r, float g, float b, float& h, float& s, float& l);
