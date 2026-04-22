@@ -143,7 +143,7 @@ StbImage StbImage::sum(const StbImage& other, int method)
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
-	stbi_write_png("Resources/sum.png", width, height, channels, new_pixel_data, width * channels);
+	
 
 	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
 	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
@@ -186,7 +186,7 @@ StbImage StbImage::subtract(const StbImage& other, int method)
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
-	stbi_write_png("Resources/sub.png", width, height, channels, new_pixel_data, width * channels);
+	
 
 	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
 	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
@@ -225,7 +225,7 @@ StbImage StbImage::multiply(const StbImage& other, int method)
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
-	stbi_write_png("Resources/mul.png", width, height, channels, new_pixel_data, width * channels);
+	
 
 	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
 	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
@@ -264,7 +264,7 @@ StbImage StbImage::divide(const StbImage& other, int method)
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
-	stbi_write_png("Resources/div.png", width, height, channels, new_pixel_data, width * channels);
+	
 
 	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
 	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
@@ -303,7 +303,7 @@ StbImage StbImage::logicalAnd(const StbImage& other, int method)
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
-	stbi_write_png("Resources/and.png", width, height, channels, new_pixel_data, width * channels);
+	
 
 	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
 	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
@@ -342,7 +342,7 @@ StbImage StbImage::logicalOr(const StbImage& other, int method)
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
-	stbi_write_png("Resources/or.png", width, height, channels, new_pixel_data, width * channels);
+	
 
 	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
 	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
@@ -381,7 +381,7 @@ StbImage StbImage::logicalXor(const StbImage& other, int method)
 	normalize(raw_new_pixel_data, new_pixel_data, width * height * channels, method);
 
 	// Salvar a imagem resultante para teste
-	stbi_write_png("Resources/xor.png", width, height, channels, new_pixel_data, width * channels);
+	
 
 	// Libera a memÃ³ria alocada para os dados intermediÃ¡rios
 	// O new_pixel_data serÃ¡ liberado pelo destrutor da imagem resultante
@@ -408,7 +408,7 @@ StbImage StbImage::translate(int dx, int dy) {
 	}
 
 	// salvar imagem
-	stbi_write_png("Resources/translate.png", width, height, channels, new_data, width * channels);
+	
 	return StbImage(width, height, channels, new_data);
 }
 

@@ -79,10 +79,8 @@ void Movable::Update()
 void Movable::Draw()
 {
     Color c = Color(1, 1, 1, 1);
-    if (colliding)
-        c = Color(1, 0, 0, 1); // vermelho
-    else if (selected)
-        c = Color(0.5f, 1.0f, 0.5f, 1.0f); // verdinho pra indicar selecionado
+    if (selected)
+        c = Color(0.96f, 0.16f, 0.16f, 1.0f); // vermelho da interface (#F52929) para indicar selecionado
 
     sprite->Draw(x, y, z, scale, rotation, c);
 }

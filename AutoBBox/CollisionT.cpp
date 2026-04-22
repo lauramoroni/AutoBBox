@@ -132,37 +132,35 @@ void CollisionT::Init()
         if (rot2 != 0.0f) img2 = img2.rotate(rot2);
 
         std::string outFilename;
+        static int tempCounter = 0;
+        outFilename = "Resources/~temp_op_" + std::to_string(++tempCounter) + ".png";
+
+        StbImage result(0, 0, 0, nullptr);
 
         if (opName == "Sum") {
-            img1.sum(img2, MEAN);
-            outFilename = "Resources/sum.png";
+            result = img1.sum(img2, MEAN);
         }
         else if (opName == "Subtract") {
-            img1.subtract(img2, MEAN);
-            outFilename = "Resources/sub.png";
+            result = img1.subtract(img2, MEAN);
         }
         else if (opName == "Multiply") {
-            img1.multiply(img2, MEAN);
-            outFilename = "Resources/mul.png";
+            result = img1.multiply(img2, MEAN);
         }
         else if (opName == "Divide") {
-            img1.divide(img2, MEAN);
-            outFilename = "Resources/div.png";
+            result = img1.divide(img2, MEAN);
         }
         else if (opName == "AND") {
-            img1.logicalAnd(img2, MEAN);
-            outFilename = "Resources/and.png";
+            result = img1.logicalAnd(img2, MEAN);
         }
         else if (opName == "OR") {
-            img1.logicalOr(img2, MEAN);
-            outFilename = "Resources/or.png";
+            result = img1.logicalOr(img2, MEAN);
         }
         else if (opName == "XOR") {
-            img1.logicalXor(img2, MEAN);
-            outFilename = "Resources/xor.png";
+            result = img1.logicalXor(img2, MEAN);
         }
 
-        if (!outFilename.empty()) {
+        if (result.pixel_data) {
+            result.save(outFilename.c_str());
             AutoBBox* bbox = new AutoBBox(outFilename.c_str());
             bbox->GeneratePolyBBox();
 
@@ -286,66 +284,71 @@ void CollisionT::Init()
 
 void CollisionT::Update()
 {
-    // desseleciona figuras com a tecla ESC
-    if (window->KeyPress(VK_ESCAPE)) {
-        scene->Begin();
-        Object* obj = nullptr;
-        while ((obj = scene->Next()) != nullptr) {
-            if (Movable* mov = dynamic_cast<Movable*>(obj)) {
-                if (mov->selected) {
-                    mov->selected = false;
-                }
-            }
-        }
-    }
-
-    // habilita/desabilita bounding box
-    if (window->KeyPress('B'))
-        viewBBox = !viewBBox;
-
-    static bool prevMouse = false;
-	bool currMouse = window->KeyDown(VK_LBUTTON);
-	OutputDebugStringA(("Mouse state: " + std::to_string(currMouse) + "\n").c_str());
-	mouseClicked = currMouse && !prevMouse;
-	prevMouse = currMouse;
-
-	if (window->KeyDown(VK_CONTROL)) {
-		size_t selectedCount = GetSelectedShapes().size();
-		if (selectedCount == 2) {
-			if (!activeMenu || activeMenu == singleMenuObj) {
-				if (activeMenu == singleMenuObj) singleMenuObj->Deactivate();
-				activeMenu = rootMenuObj;
-			}
-			if (activeMenu) {
-				activeMenu->Update();
-			}
-		} else if (selectedCount == 1) {
-			if (!activeMenu || (activeMenu != singleMenuObj)) {
-				if (activeMenu) activeMenu->Deactivate();
-				activeMenu = singleMenuObj;
-			}
-			if (activeMenu) {
-				activeMenu->Update();
-			}
-		} else {
-			if (activeMenu) {
-				activeMenu->Deactivate();
-				activeMenu = nullptr;
-			}
+	// desseleciona figuras com a tecla ESC e fecha menu se aberto
+	if (window->KeyPress(VK_ESCAPE)) {
+		if (activeMenu) {
+			activeMenu->Deactivate();
+			activeMenu = nullptr;
 			rootMenuObj->Deactivate();
 			algMenuObj->Deactivate();
 			logMenuObj->Deactivate();
 			singleMenuObj->Deactivate();
+		} else {
+			scene->Begin();
+			Object* obj = nullptr;
+			while ((obj = scene->Next()) != nullptr) {
+				if (Movable* mov = dynamic_cast<Movable*>(obj)) {
+					if (mov->selected) {
+						mov->selected = false;
+					}
+				}
+			}
 		}
-	} else {
-		if (activeMenu) {
-			activeMenu->Deactivate();
-			activeMenu = nullptr;
-		}
+	}
+
+	// habilita/desabilita bounding box
+	if (window->KeyPress('B'))
+		viewBBox = !viewBBox;
+
+	static bool prevMouse = false;
+	bool currMouse = window->KeyDown(VK_LBUTTON);
+	mouseClicked = currMouse && !prevMouse;
+	prevMouse = currMouse;
+
+	static bool prevRMouse = false;
+	bool currRMouse = window->KeyDown(VK_RBUTTON);
+	bool rMouseClicked = currRMouse && !prevRMouse;
+	prevRMouse = currRMouse;
+
+	if (rMouseClicked) {
+		size_t selectedCount = GetSelectedShapes().size();
+		if (activeMenu) activeMenu->Deactivate();
 		rootMenuObj->Deactivate();
 		algMenuObj->Deactivate();
 		logMenuObj->Deactivate();
 		singleMenuObj->Deactivate();
+		activeMenu = nullptr;
+
+		if (selectedCount == 2) {
+			activeMenu = rootMenuObj;
+		} else if (selectedCount == 1) {
+			activeMenu = singleMenuObj;
+		}
+	}
+
+	if (activeMenu) {
+		activeMenu->Update();
+		// Se apos o update o "mouseClicked" ainda estiver ativo e foi consumido com clique fora
+		// ele vai fechar o menu. Isso garante que nao continue a desenhar o menu.
+		if (mouseClicked) {
+			activeMenu->Deactivate();
+			activeMenu = nullptr;
+			rootMenuObj->Deactivate();
+			algMenuObj->Deactivate();
+			logMenuObj->Deactivate();
+			singleMenuObj->Deactivate();
+			mouseClicked = false;
+		}
 	}
 
 	if (window->KeyDown('A')) {
@@ -429,7 +432,7 @@ void CollisionT::Update()
 
     // Desselecionar todos ao clicar fora (sobrescrito se o clique atingir algum, atravs do Movable)
     // N�o desseleciona se o menu radial estiver aberto (tecla E)
-    if (mouseClicked && !window->KeyDown(VK_SHIFT) && !window->KeyDown(VK_CONTROL)) {
+    if (mouseClicked && !window->KeyDown(VK_SHIFT)) {
         scene->Begin();
         Object* obj = nullptr;
         while ((obj = scene->Next()) != nullptr) {
