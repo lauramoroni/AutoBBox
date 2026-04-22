@@ -135,10 +135,12 @@ void CollisionT::Init()
 
         if (opName == "Sum") {
             img1.sum(img2, MEAN);
+            img1.toCMYK();
             outFilename = "Resources/sum.png";
         }
         else if (opName == "Subtract") {
             img1.subtract(img2, MEAN);
+            img1.toHSL();
             outFilename = "Resources/sub.png";
         }
         else if (opName == "Multiply") {
